@@ -1,0 +1,18 @@
+{
+  "name": "kartorama",
+  "version": "1.0.0",
+  "description": "Kart",
+  "main": "index.html",
+  "scripts": {
+    "test": ""
+  },
+  "author": "Eskild Skov Pedersen",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^4.3.1",
+    "express": "^4.16.4",
+    "jquery": "^3.3.1",
+    "leaflet": "^1.4.0",
+    "popper.js": "^1.14.7"
+  }
+}
