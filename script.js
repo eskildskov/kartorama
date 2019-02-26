@@ -2,9 +2,6 @@ var map = L.map('map').setView([62.6112822, 7.907181], 8);
 
 L.tileLayer('http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}', {
   attribution: '<a href="http://www.kartverket.no/">Kartverket</a>',
-  useCache: true,
-  crossOrigin: true,
-  cacheMaxAge: 2592000000
 }).addTo(map);
 
 if (!map.restoreView()) {
@@ -15,10 +12,7 @@ var wmsLayer = L.tileLayer.wms('https://gis3.nve.no/map/services/Bratthet/MapSer
     layers: 'Bratthet_snoskred',
     format: 'image/png',
     transparent: 'true',
-    opacity: 0.5,
-    useCache: true,
-    crossOrigin: true,
-    cacheMaxAge: 2592000000
+    opacity: 0.5
 }).addTo(map);
 
 slider = L.control.slider(function(value) {
