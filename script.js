@@ -15,7 +15,7 @@ var wmsLayer = L.tileLayer.wms('https://gis3.nve.no/map/services/Bratthet/MapSer
     opacity: 0.5
 }).addTo(map);
 
-slider = L.control.slider(function(value) {
+var slider = L.control.slider(function(value) {
   wmsLayer.setOpacity(value);
 }, {
   min: 0,
@@ -28,4 +28,10 @@ slider = L.control.slider(function(value) {
   title: 'Gjennomsiktighet',
   showValue: false,
   value: 0.3
+}).addTo(map);
+
+var fileLayer = L.Control.fileLayerLoad({
+  layer: L.geoJson,
+  // See http://leafletjs.com/reference.html#geojson-options
+  layerOptions: {style: {color:'red'}}
 }).addTo(map);
