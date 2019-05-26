@@ -35,3 +35,11 @@ var fileLayer = L.Control.fileLayerLoad({
   // See http://leafletjs.com/reference.html#geojson-options
   layerOptions: {style: {color:'red'}}
 }).addTo(map);
+
+
+L.control.measure({
+  position: 'topleft',
+  lineDashArray: '1,0',
+  lineColor: 'blue',
+  lineWeight: 3
+}).addTo(map)
