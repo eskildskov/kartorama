@@ -12,7 +12,7 @@ var wmsLayer = L.tileLayer.wms('https://gis3.nve.no/map/services/Bratthet/MapSer
     layers: 'Bratthet_snoskred',
     format: 'image/png',
     transparent: 'true',
-    opacity: 0.5
+    opacity: 0
 }).addTo(map);
 
 var slider = L.control.slider(function(value) {
