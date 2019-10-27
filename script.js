@@ -27,7 +27,7 @@ var slider = L.control.slider(function(value) {
   syncSlider: true,
   title: 'Gjennomsiktighet',
   showValue: false,
-  value: 0.3
+  value: 0
 }).addTo(map);
 
 var fileLayer = L.Control.fileLayerLoad({
