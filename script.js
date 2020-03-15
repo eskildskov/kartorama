@@ -11,12 +11,12 @@ if (!map.restoreView()) {
   map.setView([62.2587306, 6.3106444], 14);
 }
 
-var wmsLayer = L.tileLayer
-  .wms('https://gis3.nve.no/map/services/Bratthet/MapServer/WmsServer?', {
-    layers: 'Bratthet_snoskred',
-    format: 'image/png',
-    transparent: 'true',
-    opacity: 0,
+var wmsLayer = L.esri
+  .dynamicMapLayer({
+    url:
+      'https://gis3.nve.no/map/rest/services/Mapservices/KlassifiseringSkredterreng/MapServer',
+    layers: [4, 5, 6, 7],
+    opacity: 0.5,
   })
   .addTo(map);
 
