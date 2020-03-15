@@ -11,7 +11,7 @@ let rasterBaseMap = L.tileLayer(
 );
 
 let vectorBaseMap = L.tileLayer(
-  'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}'
+  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}'
 );
 
 let kastOverlayMap = L.esri.dynamicMapLayer({
