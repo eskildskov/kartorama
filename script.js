@@ -1,15 +1,12 @@
-// let map = L.map('map').setView([62.6112822, 7.907181], 8);
-
-// if (!map.restoreView()) {
-//   map.setView([62.2587306, 6.3106444], 14);
-// }
-
-let attribution = '<a href="http://www.kartverket.no/">Kartverket</a>';
+let attributionKartverket =
+  '<a href="http://www.kartverket.no/">Kartverket</a>';
+let attributionNVE = '<a href="https://www.nve.no/">NVE</a>';
 
 let rasterBaseMap = L.tileLayer(
   'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster3&zoom={z}&x={x}&y={y}',
   {
     useCache: true,
+    attribution: attributionKartverket,
   }
 );
 
@@ -17,6 +14,7 @@ let vectorBaseMap = L.tileLayer(
   'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
   {
     useCache: true,
+    attribution: attributionKartverket,
   }
 );
 
@@ -27,6 +25,7 @@ let kastOverlayMap = L.esri.dynamicMapLayer(
     layers: [4, 5, 6, 7],
   },
   {
+    attribution: attributionNVE,
     useCache: true,
   }
 );
@@ -38,6 +37,7 @@ let steepnessOverlayMap = L.tileLayer.wms(
     format: 'image/png',
     transparent: 'true',
     useCache: true,
+    attribution: attributionNVE,
   }
 );
 
@@ -47,24 +47,44 @@ let baseMaps = {
 };
 
 let overlayMaps = {
-  Bratthetskart: steepnessOverlayMap,
+  Bratthet: steepnessOverlayMap,
   AutoKAST: kastOverlayMap,
 };
 
 // let map = L.map('map').setView([62.6112822, 7.907181], 8);
 
-let map = L.map('map', {
-  center: [62.6112822, 7.907181],
-  zoom: 8,
-  layers: vectorBaseMap,
-});
+let map = L.map('map', { layers: vectorBaseMap });
+let activeOverlay;
+
+function initMap() {
+  let activeBaseLayerName = localStorage.getItem('activeBaseLayerName');
+  if (activeBaseLayerName) {
+    map.addLayer(baseMaps[activeBaseLayerName]);
+  }
+
+  let activeOverlayName = localStorage.getItem('activeOverlayName')
+    ? localStorage.getItem('activeOverlayName')
+    : 'Bratthet';
+  map.addLayer(overlayMaps[activeOverlayName]);
+  activeOverlay = overlayMaps[activeOverlayName];
+
+  let center = localStorage.getItem('currentCenter')
+    ? JSON.parse(localStorage.getItem('currentCenter'))
+    : [62.5661863495104, 7.7187538146972665];
+
+  let zoom = localStorage.getItem('currentZoom')
+    ? localStorage.getItem('currentZoom')
+    : 8;
+
+  map.setView(center, zoom);
+}
+
+initMap();
 
 let controlLayersOptions = {
   position: 'topleft',
   collapsed: false,
 };
-
-// L.control.layers(baseMaps, '', controlLayersOptions).addTo(map);
 
 let groupedOverlays = {
   Tillegg: {
@@ -74,10 +94,7 @@ let groupedOverlays = {
 };
 
 let groupLayersOptions = {
-  // Make the "Landmarks" group exclusive (use radio inputs)
   exclusiveGroups: ['Tillegg'],
-  // Show a checkbox next to non-exclusive group labels for toggling all
-  // groupCheckboxes: true,
   position: 'topleft',
   collapsed: false,
 };
@@ -86,16 +103,44 @@ L.control
   .groupedLayers(baseMaps, groupedOverlays, groupLayersOptions)
   .addTo(map);
 
-if (!map.restoreView()) {
-  map.setView([62.2587306, 6.3106444], 14);
+function savePosition(e) {
+  localStorage.setItem('currentCenter', JSON.stringify(map.getCenter()));
 }
 
-let controlLayer = kastOverlayMap;
+function saveZoom(e) {
+  localStorage.setItem('currentZoom', map.getZoom());
+}
+
+function saveActiveBaseLayer(e) {
+  localStorage.setItem('activeBaseLayerName', e.name);
+}
+
+function saveActiveOverlay(e) {
+  localStorage.setItem('activeOverlayName', e.name);
+}
+
+map.on('baselayerchange', saveActiveBaseLayer);
+map.on('overlayadd', saveActiveOverlay);
+map.on('moveend', savePosition);
+map.on('zoomend', saveZoom);
+
+function changeOverlayControl(e) {
+  activeOverlay = e.layer;
+  if (slider.slider.value == 0) {
+    let val = 0.2;
+    activeOverlay.setOpacity(val);
+    slider.slider.value = val;
+  } else {
+    activeOverlay.setOpacity(slider.slider.value);
+  }
+}
+
+map.on('overlayadd', changeOverlayControl);
 
 var slider = L.control
   .slider(
     function(value) {
-      controlLayer.setOpacity(value);
+      activeOverlay.setOpacity(value);
     },
     {
       min: 0,
@@ -127,16 +172,3 @@ L.control
   .addTo(map);
 
 L.control.scale({ imperial: false, maxWidth: 200 }).addTo(map);
-
-function changeOverlayControl(e) {
-  controlLayer = e.layer;
-  if (slider.slider.value == 0) {
-    let val = 0.2;
-    controlLayer.setOpacity(val);
-    slider.slider.value = val;
-  } else {
-    controlLayer.setOpacity(slider.slider.value);
-  }
-}
-
-map.on('overlayadd', changeOverlayControl);
