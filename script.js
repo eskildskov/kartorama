@@ -7,18 +7,29 @@
 let attribution = '<a href="http://www.kartverket.no/">Kartverket</a>';
 
 let rasterBaseMap = L.tileLayer(
-  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster3&zoom={z}&x={x}&y={y}'
+  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster3&zoom={z}&x={x}&y={y}',
+  {
+    useCache: true,
+  }
 );
 
 let vectorBaseMap = L.tileLayer(
-  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}'
+  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
+  {
+    useCache: true,
+  }
 );
 
-let kastOverlayMap = L.esri.dynamicMapLayer({
-  url:
-    'https://gis3.nve.no/map/rest/services/Mapservices/KlassifiseringSkredterreng/MapServer',
-  layers: [4, 5, 6, 7],
-});
+let kastOverlayMap = L.esri.dynamicMapLayer(
+  {
+    url:
+      'https://gis3.nve.no/map/rest/services/Mapservices/KlassifiseringSkredterreng/MapServer',
+    layers: [4, 5, 6, 7],
+  },
+  {
+    useCache: true,
+  }
+);
 
 let steepnessOverlayMap = L.tileLayer.wms(
   'https://gis3.nve.no/map/services/Bratthet/MapServer/WmsServer?',
@@ -26,6 +37,7 @@ let steepnessOverlayMap = L.tileLayer.wms(
     layers: 'Bratthet_snoskred',
     format: 'image/png',
     transparent: 'true',
+    useCache: true,
   }
 );
 
