@@ -68,6 +68,11 @@ function initMap() {
   map.addLayer(overlayMaps[activeOverlayName]);
   activeOverlay = overlayMaps[activeOverlayName];
 
+  let currentOpacity = localStorage.getItem('currentOpacity');
+  if (currentOpacity) {
+    activeOverlay.setOpacity(currentOpacity);
+  }
+
   let center = localStorage.getItem('currentCenter')
     ? JSON.parse(localStorage.getItem('currentCenter'))
     : [62.5661863495104, 7.7187538146972665];
@@ -151,10 +156,14 @@ var slider = L.control
       syncSlider: true,
       title: 'Gjennomsiktighet',
       showValue: false,
-      value: 0,
+      value: activeOverlay.options.opacity,
     }
   )
   .addTo(map);
+
+slider.slider.addEventListener('click', function() {
+  localStorage.setItem('currentOpacity', slider.slider.value);
+});
 
 var fileLayer = L.Control.fileLayerLoad({
   layer: L.geoJson,
