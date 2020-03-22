@@ -113,7 +113,7 @@ var slider = L.control
       min: 0,
       max: 1.0,
       step: 0.01,
-      position: 'bottomleft',
+      position: 'topleft',
       collapsed: false,
       syncSlider: true,
       title: 'Gjennomsiktighet',
