@@ -6,6 +6,7 @@ let rasterBaseMap = L.tileLayer(
   'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster3&zoom={z}&x={x}&y={y}',
   {
     useCache: true,
+    cacheMaxAge: 8640000000,
     attribution: attributionKartverket,
   }
 );
@@ -14,6 +15,7 @@ let vectorBaseMap = L.tileLayer(
   'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
   {
     useCache: true,
+    cacheMaxAge: 8640000000,
     attribution: attributionKartverket,
   }
 );
@@ -27,6 +29,7 @@ let kastOverlayMap = L.esri.dynamicMapLayer(
   {
     attribution: attributionNVE,
     useCache: true,
+    cacheMaxAge: 8640000000,
   }
 );
 
@@ -37,6 +40,7 @@ let steepnessOverlayMap = L.tileLayer.wms(
     format: 'image/png',
     transparent: 'true',
     useCache: true,
+    cacheMaxAge: 8640000000,
     attribution: attributionNVE,
   }
 );
@@ -47,31 +51,34 @@ let baseMaps = {
 };
 
 let overlayMaps = {
-  Bratthet: steepnessOverlayMap,
+  Helning: steepnessOverlayMap,
   AutoKAST: kastOverlayMap,
 };
 
-// let map = L.map('map').setView([62.6112822, 7.907181], 8);
-
-let map = L.map('map', { layers: vectorBaseMap });
+let map = L.map('map');
 let activeOverlay;
 
+L.control.scale({ imperial: false, maxWidth: 200 }).addTo(map);
+
 function initMap() {
-  let activeBaseLayerName = localStorage.getItem('activeBaseLayerName');
+  let activeBaseLayerName = localStorage.getItem('activeBaseLayerName')
+    ? localStorage.getItem('activeBaseLayerName')
+    : 'Vektorkart';
   if (activeBaseLayerName) {
     map.addLayer(baseMaps[activeBaseLayerName]);
   }
 
   let activeOverlayName = localStorage.getItem('activeOverlayName')
     ? localStorage.getItem('activeOverlayName')
-    : 'Bratthet';
+    : 'Helning';
+  localStorage.removeItem('activeOverlayName');
   map.addLayer(overlayMaps[activeOverlayName]);
   activeOverlay = overlayMaps[activeOverlayName];
 
-  let currentOpacity = localStorage.getItem('currentOpacity');
-  if (currentOpacity) {
-    activeOverlay.setOpacity(currentOpacity);
-  }
+  let currentOpacity = localStorage.getItem('currentOpacity')
+    ? localStorage.getItem('currentOpacity')
+    : 0;
+  activeOverlay.setOpacity(currentOpacity);
 
   let center = localStorage.getItem('currentCenter')
     ? JSON.parse(localStorage.getItem('currentCenter'))
@@ -93,15 +100,33 @@ let controlLayersOptions = {
 
 let groupedOverlays = {
   Tillegg: {
-    Bratthet: steepnessOverlayMap,
+    Helning: steepnessOverlayMap,
     AutoKAST: kastOverlayMap,
   },
 };
+var slider = L.control
+  .slider(
+    function(value) {
+      activeOverlay.setOpacity(value);
+    },
+    {
+      min: 0,
+      max: 1.0,
+      step: 0.01,
+      position: 'bottomleft',
+      collapsed: false,
+      syncSlider: true,
+      title: 'Gjennomsiktighet',
+      showValue: false,
+      value: activeOverlay.options.opacity,
+    }
+  )
+  .addTo(map);
 
 let groupLayersOptions = {
   exclusiveGroups: ['Tillegg'],
-  position: 'topleft',
-  collapsed: false,
+  position: 'bottomleft',
+  collapsed: true,
 };
 
 L.control
@@ -142,25 +167,6 @@ function changeOverlayControl(e) {
 
 map.on('overlayadd', changeOverlayControl);
 
-var slider = L.control
-  .slider(
-    function(value) {
-      activeOverlay.setOpacity(value);
-    },
-    {
-      min: 0,
-      max: 1.0,
-      step: 0.01,
-      position: 'topleft',
-      collapsed: false,
-      syncSlider: true,
-      title: 'Gjennomsiktighet',
-      showValue: false,
-      value: activeOverlay.options.opacity,
-    }
-  )
-  .addTo(map);
-
 slider.slider.addEventListener('click', function() {
   localStorage.setItem('currentOpacity', slider.slider.value);
 });
@@ -179,5 +185,3 @@ L.control
     lineWeight: 3,
   })
   .addTo(map);
-
-L.control.scale({ imperial: false, maxWidth: 200 }).addTo(map);
