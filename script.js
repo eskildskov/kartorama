@@ -5,8 +5,6 @@ let attributionNVE = '<a href="https://www.nve.no/">NVE</a>';
 let rasterBaseMap = L.tileLayer(
   'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster3&zoom={z}&x={x}&y={y}',
   {
-    useCache: true,
-    cacheMaxAge: 8640000000,
     attribution: attributionKartverket,
   }
 );
@@ -14,8 +12,6 @@ let rasterBaseMap = L.tileLayer(
 let vectorBaseMap = L.tileLayer(
   'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
   {
-    useCache: true,
-    cacheMaxAge: 8640000000,
     attribution: attributionKartverket,
   }
 );
@@ -28,8 +24,6 @@ let kastOverlayMap = L.esri.dynamicMapLayer(
   },
   {
     attribution: attributionNVE,
-    useCache: true,
-    cacheMaxAge: 8640000000,
   }
 );
 
@@ -39,8 +33,6 @@ let steepnessOverlayMap = L.tileLayer.wms(
     layers: 'Bratthet_snoskred',
     format: 'image/png',
     transparent: 'true',
-    useCache: true,
-    cacheMaxAge: 8640000000,
     attribution: attributionNVE,
   }
 );
