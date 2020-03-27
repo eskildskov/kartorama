@@ -226,3 +226,39 @@ var fileLayer = L.Control.fileLayerLoad({
 }).addTo(map);
 
 L.control.locate({ position: 'bottomleft', initialZoomLevel: 15 }).addTo(map);
+
+let elevationLayer = L.nonTiledLayer
+  .wcs('https://openwms.statkart.no/skwms1/wcs.dtm?', {
+    wcsOptions: {
+      coverage: 'land_utm33_10m',
+      colorScale: false,
+    },
+  })
+  .addTo(map);
+
+map.on('click', e => {
+  console.log(elevationLayer.getValueAtPoint(e.containerPoint));
+});
+
+map.on('pm:create', e => {
+  let currentLayer = e.layer;
+  let geoJSONLine = e.layer.toGeoJSON();
+  let chunkedGeoJSONLine = turf.lineChunk(geoJSONLine, 0.3);
+
+  turf.coordEach(chunkedGeoJSONLine, currentCoord => {
+    console.log(currentCoord[1], currentCoord[0]);
+    let containerPoint = map.latLngToContainerPoint([
+      currentCoord[1],
+      currentCoord[0],
+    ]);
+    console.log(elevationLayer.getValueAtPoint(containerPoint));
+  });
+  let distance = turf.length(geoJSONLine).toFixed(1);
+
+  currentLayer.bindPopup(`${distance} km`).openPopup();
+  currentLayer.on('click', e => {
+    // let point = turf.along(geoJSONLine, 0.2);
+
+    console.log(point);
+  });
+});
