@@ -234,3 +234,5 @@ var fileLayer = L.Control.fileLayerLoad({
   // See http://leafletjs.com/reference.html#geojson-options
   layerOptions: { style: { color: 'red' } },
 }).addTo(map);
+
+L.control.locate().addTo(map);
