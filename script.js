@@ -99,31 +99,10 @@ map.pm.addControls({
   drawPolyline: true,
 });
 
-let currentLine = [];
-
-var pane = map.createPane('fixed', document.getElementById('map'));
-let currentDistance = 0;
-
-var popup = L.popup({
-  pane: 'fixed',
-  className: 'popup-fixed',
-  autoPan: false,
-  autoClose: false,
-  closeOnClick: false,
-  closeButton: false,
-})
-  .setLatLng([0, 0])
-  .setContent('Trøkk et sted');
-
-map.openPopup(popup);
-let drawnLayers = [];
 map.on('pm:drawstart', ({ workingLayer }) => {
-  // only allow one drawing layer
-
-  // if (drawingLayers.length > 0) {
-  //   map.removeLayer(drawingLayers[0]);
-  //   drawingLayers.splice(0, 1);
-  // }
+  let currentDistance = 0;
+  let tooltip = L.tooltip().setContent('sadsdf');
+  workingLayer.bindTooltip(tooltip);
 
   workingLayer.on('pm:vertexadded', e => {
     lastPoint = e.latlng;
@@ -133,10 +112,12 @@ map.on('pm:drawstart', ({ workingLayer }) => {
     map.on('mousemove', e => {
       let newDistance;
       let currentPoint = e.latlng;
+
       newDistance =
         map.distance(currentPoint, lastPoint) / 1000 + currentDistance;
       newDistance = newDistance.toFixed(1);
-      popup.setContent(`${newDistance} km`);
+      workingLayer.setTooltipContent(`${newDistance} km`);
+      workingLayer.openTooltip(e.latlng);
     });
   });
 });
