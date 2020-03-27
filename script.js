@@ -47,11 +47,15 @@ let overlayMaps = {
   AutoKAST: kastOverlayMap,
 };
 
-let map = L.map('map');
+let map = L.map('map', { zoomControl: false });
 let activeOverlay;
 
 L.control.scale({ imperial: false, maxWidth: 200 }).addTo(map);
-
+L.control
+  .zoom({
+    position: 'bottomleft',
+  })
+  .addTo(map);
 function initMap() {
   let activeBaseLayerName = localStorage.getItem('activeBaseLayerName')
     ? localStorage.getItem('activeBaseLayerName')
@@ -86,7 +90,7 @@ function initMap() {
 initMap();
 
 map.pm.addControls({
-  position: 'topleft',
+  position: 'bottomleft',
   drawCircle: false,
   drawMarker: false,
   drawCircleMarker: false,
@@ -133,7 +137,7 @@ map.on('pm:drawend', () => {
 });
 
 let controlLayersOptions = {
-  position: 'topleft',
+  position: 'bottomright',
   collapsed: false,
 };
 
@@ -152,7 +156,7 @@ var slider = L.control
       min: 0,
       max: 1.0,
       step: 0.01,
-      position: 'topleft',
+      position: 'bottomright',
       collapsed: false,
       syncSlider: true,
       title: 'Gjennomsiktighet',
@@ -162,14 +166,12 @@ var slider = L.control
   )
   .addTo(map);
 
-let groupLayersOptions = {
-  exclusiveGroups: ['Tillegg'],
-  position: 'bottomleft',
-  collapsed: true,
-};
-
 L.control
-  .groupedLayers(baseMaps, groupedOverlays, groupLayersOptions)
+  .groupedLayers(baseMaps, groupedOverlays, {
+    exclusiveGroups: ['Tillegg'],
+    position: 'bottomright',
+    collapsed: true,
+  })
   .addTo(map);
 
 function savePosition(e) {
@@ -214,6 +216,7 @@ var fileLayer = L.Control.fileLayerLoad({
   layer: L.geoJson,
   // See http://leafletjs.com/reference.html#geojson-options
   layerOptions: { style: { color: 'red' } },
+  position: 'bottomleft',
 }).addTo(map);
 
-L.control.locate().addTo(map);
+L.control.locate({ position: 'bottomleft' }).addTo(map);
