@@ -85,6 +85,76 @@ function initMap() {
 
 initMap();
 
+map.pm.addControls({
+  position: 'topleft',
+  drawCircle: false,
+  drawMarker: false,
+  drawCircleMarker: false,
+  drawRectangle: false,
+  drawPolygon: false,
+  dragMode: false,
+  cutPolygon: false,
+  removalMode: false,
+});
+
+let currentLine = [];
+
+var pane = map.createPane('fixed', document.getElementById('map'));
+let currentDistance = 0;
+
+var popup = L.popup({
+  pane: 'fixed',
+  className: 'popup-fixed',
+  autoPan: false,
+  autoClose: false,
+  closeOnClick: false,
+  closeButton: false,
+})
+  .setLatLng([0, 0])
+  .setContent('Trøkk et sted');
+
+map.openPopup(popup);
+let drawnLayers = [];
+map.on('pm:drawstart', ({ workingLayer }) => {
+  // only allow one drawing layer
+
+  // if (drawingLayers.length > 0) {
+  //   map.removeLayer(drawingLayers[0]);
+  //   drawingLayers.splice(0, 1);
+  // }
+
+  workingLayer.on('pm:vertexadded', e => {
+    lastPoint = e.latlng;
+    lineGeoJSON = workingLayer.toGeoJSON();
+    currentDistance = turf.length(lineGeoJSON);
+    popup.setContent(`Distanse: ${currentDistance}`);
+
+    map.on('mousemove', e => {
+      let newDistance;
+      let currentPoint = e.latlng;
+      newDistance =
+        map.distance(currentPoint, lastPoint) / 1000 + currentDistance;
+      newDistance = newDistance.toFixed(2);
+      popup.setContent(`${newDistance} km`);
+    });
+  });
+});
+
+map.on('pm:create', e => {
+  console.log(e);
+  let currentLayer = e.layer;
+  // drawnLayers.push(e.layer);
+  let distance = turf.length(currentLayer.toGeoJSON()).toFixed(1);
+  currentLayer.bindPopup(`${distance} km`);
+  e.layer.on('click', e => {
+    console.log(e.target.toGeoJSON());
+  });
+});
+
+map.on('pm:drawend', () => {
+  map.off('mousemove');
+});
+
 let controlLayersOptions = {
   position: 'topleft',
   collapsed: false,
