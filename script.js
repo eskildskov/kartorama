@@ -112,6 +112,8 @@ map.on('pm:drawstart', ({ workingLayer }) => {
     lastPoint = e.latlng;
     lineGeoJSON = workingLayer.toGeoJSON();
     currentDistance = turf.length(lineGeoJSON);
+    workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`);
+    workingLayer.openTooltip(e.latlng);
 
     map.on('mousemove', e => {
       let newDistance;
@@ -119,8 +121,7 @@ map.on('pm:drawstart', ({ workingLayer }) => {
 
       newDistance =
         map.distance(currentPoint, lastPoint) / 1000 + currentDistance;
-      newDistance = newDistance.toFixed(1);
-      workingLayer.setTooltipContent(`${newDistance} km`);
+      workingLayer.setTooltipContent(`${newDistance.toFixed(1)} km`);
       workingLayer.openTooltip(e.latlng);
     });
   });
