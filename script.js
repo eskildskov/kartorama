@@ -48,6 +48,11 @@ let overlayMaps = {
 };
 
 let map = L.map('map', { zoomControl: false });
+map.pm.setGlobalOptions({
+  tooltips: false,
+  allowSelfIntersection: false,
+  markerStyle: { draggable: false },
+});
 let activeOverlay;
 
 L.control.scale({ imperial: false, maxWidth: 200 }).addTo(map);
@@ -56,6 +61,7 @@ L.control
     position: 'bottomleft',
   })
   .addTo(map);
+
 function initMap() {
   let activeBaseLayerName = localStorage.getItem('activeBaseLayerName')
     ? localStorage.getItem('activeBaseLayerName')
@@ -215,9 +221,8 @@ slider.slider.addEventListener('click', function() {
 
 var fileLayer = L.Control.fileLayerLoad({
   layer: L.geoJson,
-  // See http://leafletjs.com/reference.html#geojson-options
   layerOptions: { style: { color: 'red' } },
-  position: 'bottomleft',
+  position: 'topleft',
 }).addTo(map);
 
-L.control.locate({ position: 'bottomleft' }).addTo(map);
+L.control.locate({ position: 'bottomleft', initialZoomLevel: 15 }).addTo(map);
