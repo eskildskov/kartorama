@@ -127,28 +127,22 @@ map.on('pm:drawstart', ({ workingLayer }) => {
     lastPoint = e.latlng;
     lineGeoJSON = workingLayer.toGeoJSON();
     currentDistance = turf.length(lineGeoJSON);
-    popup.setContent(`Distanse: ${currentDistance}`);
 
     map.on('mousemove', e => {
       let newDistance;
       let currentPoint = e.latlng;
       newDistance =
         map.distance(currentPoint, lastPoint) / 1000 + currentDistance;
-      newDistance = newDistance.toFixed(2);
+      newDistance = newDistance.toFixed(1);
       popup.setContent(`${newDistance} km`);
     });
   });
 });
 
 map.on('pm:create', e => {
-  console.log(e);
   let currentLayer = e.layer;
-  // drawnLayers.push(e.layer);
   let distance = turf.length(currentLayer.toGeoJSON()).toFixed(1);
-  currentLayer.bindPopup(`${distance} km`);
-  e.layer.on('click', e => {
-    console.log(e.target.toGeoJSON());
-  });
+  currentLayer.bindPopup(`${distance} km`).openPopup();
 });
 
 map.on('pm:drawend', () => {
