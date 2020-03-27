@@ -95,6 +95,8 @@ map.pm.addControls({
   dragMode: false,
   cutPolygon: false,
   removalMode: false,
+  editMode: false,
+  drawPolyline: true,
 });
 
 let currentLine = [];
