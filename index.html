@@ -8,14 +8,6 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
 
-    <!-- Bootstrap CSS -->
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-      crossorigin="anonymous"
-    />
-
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
@@ -58,32 +50,36 @@
     <script src="https://cdn.jsdelivr.net/npm/geotiff@1.0.0-beta.8/dist-browser/main.min.js"></script>
     <script src="assets/geotiff.js"></script>
     <script src="assets/NonTiledLayer.WCS.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css"
+    />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.js"></script>
+
     <style>
-      .popup-fixed {
-        position: fixed;
-        top: 0 !important;
-        right: 0 !important;
-        left: auto !important;
-        bottom: auto !important;
-        transform: none !important;
+      html,
+      body,
+      #map,
+      #elevation-div {
+        height: 100%;
+        width: 100%;
+        padding: 0;
         margin: 0;
-        border-radius: 0;
-        width: 300px;
       }
-
-      .popup-fixed .leaflet-popup-tip-container {
-        display: none;
+      /* #map {
+        height: 75%;
       }
-
-      .popup-fixed .leaflet-popup-content-wrapper {
-        border-radius: 0;
-      }
+      #elevation-div {
+        height: 25%;
+        font: 12px/1.5 'Helvetica Neue', Arial, Helvetica, sans-serif;
+      } */
     </style>
     <title>Kartorama</title>
   </head>
 
   <body>
-    <div id="map" class="container-fluid" style="height: 100vh"></div>
+    <div id="map"></div>
     <script src="script.js"></script>
   </body>
 </html>

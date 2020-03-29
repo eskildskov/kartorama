@@ -227,38 +227,69 @@ var fileLayer = L.Control.fileLayerLoad({
 
 L.control.locate({ position: 'bottomleft', initialZoomLevel: 15 }).addTo(map);
 
-let elevationLayer = L.nonTiledLayer
-  .wcs('https://openwms.statkart.no/skwms1/wcs.dtm?', {
+let elevationLayer = L.nonTiledLayer.wcs(
+  'https://openwms.statkart.no/skwms1/wcs.dtm?',
+  {
     wcsOptions: {
       coverage: 'land_utm33_10m',
       colorScale: false,
     },
-  })
-  .addTo(map);
+  }
+);
 
-map.on('click', e => {
-  console.log(elevationLayer.getValueAtPoint(e.containerPoint));
-});
+map.on('pm:drawstart', () => elevationLayer.addTo(map));
+
+map.on('pm:drawend', () => elevationLayer.remove());
 
 map.on('pm:create', e => {
   let currentLayer = e.layer;
-  let geoJSONLine = e.layer.toGeoJSON();
-  let chunkedGeoJSONLine = turf.lineChunk(geoJSONLine, 0.3);
 
+  // make linestring with point every 10 m
+  let geoJSONLine = e.layer.toGeoJSON();
+  let chunkedGeoJSONLine = turf.lineChunk(geoJSONLine, 0.01);
+  chunkedGeoJSONLine = turf.lineString(turf.coordAll(chunkedGeoJSONLine));
+
+  // add elevation to the Linestring
   turf.coordEach(chunkedGeoJSONLine, currentCoord => {
-    console.log(currentCoord[1], currentCoord[0]);
     let containerPoint = map.latLngToContainerPoint([
       currentCoord[1],
       currentCoord[0],
     ]);
-    console.log(elevationLayer.getValueAtPoint(containerPoint));
+    currentCoord.push(elevationLayer.getValueAtPoint(containerPoint));
   });
+
   let distance = turf.length(geoJSONLine).toFixed(1);
 
   currentLayer.bindPopup(`${distance} km`).openPopup();
-  currentLayer.on('click', e => {
-    // let point = turf.along(geoJSONLine, 0.2);
+  map.on('click', () => console.log('click outside'));
 
-    console.log(point);
+  var elevation_options = {
+    theme: 'lime-theme',
+    detached: false,
+    elevationDiv: '#elevation-div', // if (detached), the elevation chart container
+    autohide: true, // if (!detached) autohide chart profile on chart mouseleave
+    collapsed: false, // if (!detached) initial state of chart profile control
+    position: 'topright', // if (!detached) control position on one of map corners
+    followMarker: false, // Autoupdate map center on chart mouseover.
+    imperial: false, // Chart distance/elevation units.
+    reverseCoords: false, // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
+    summary: false,
+    legend: false,
+    width: 400,
+    height: 150,
+    // responsive: false,
+  };
+
+  let controlElevation = L.control.elevation(elevation_options).addTo(map);
+  controlElevation.loadData(chunkedGeoJSONLine);
+  console.log(controlElevation);
+  map.on('click', () => {
+    controlElevation._container.style.display = 'none';
+    controlElevation.layer.remove();
+
+    e.layer.on('click', () => {
+      controlElevation._container.style.display = 'block';
+      controlElevation.layer.addTo(map);
+    });
   });
 });
