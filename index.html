@@ -57,25 +57,29 @@
       href="assets/leaflet.groupedlayercontrol.css"
     />
 
+    <script src="https://unpkg.com/leaflet.nontiledlayer/dist/NonTiledLayer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/geotiff@1.0.0-beta.8/dist-browser/main.min.js"></script>
+    <script src="assets/geotiff.js"></script>
+    <script src="assets/NonTiledLayer.WCS.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css"
+    />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.js"></script>
+
     <style>
-      .popup-fixed {
-        position: fixed;
-        top: 0 !important;
-        right: 0 !important;
-        left: auto !important;
-        bottom: auto !important;
-        transform: none !important;
+      html,
+      body,
+      #map,
+      #elevation-div {
+        height: 100%;
+        width: 100%;
+        padding: 0;
         margin: 0;
-        border-radius: 0;
+      }
+      .leaflet-popup-content {
         width: 300px;
-      }
-
-      .popup-fixed .leaflet-popup-tip-container {
-        display: none;
-      }
-
-      .popup-fixed .leaflet-popup-content-wrapper {
-        border-radius: 0;
       }
     </style>
     <title>Kartorama</title>

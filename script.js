@@ -226,3 +226,100 @@ var fileLayer = L.Control.fileLayerLoad({
 }).addTo(map);
 
 L.control.locate({ position: 'bottomleft', initialZoomLevel: 15 }).addTo(map);
+
+let elevationLayer = L.nonTiledLayer.wcs(
+  'https://openwms.statkart.no/skwms1/wcs.dtm?',
+  {
+    wcsOptions: {
+      coverage: 'land_utm33_10m',
+      colorScale: false,
+    },
+  }
+);
+
+map.on('pm:drawstart', () => elevationLayer.addTo(map));
+
+map.on('pm:drawend', () => elevationLayer.remove());
+
+map.on('pm:create', e => {
+  let currentLayer = e.layer;
+
+  // make linestring with point x?? meter
+  let geoJSONLine = e.layer.toGeoJSON();
+  let chunkedGeoJSONLine = turf.lineChunk(geoJSONLine, 0.5);
+  chunkedGeoJSONLine = turf.lineString(turf.coordAll(chunkedGeoJSONLine));
+
+  // add elevation to the Linestring
+  turf.coordEach(chunkedGeoJSONLine, currentCoord => {
+    let containerPoint = map.latLngToContainerPoint([
+      currentCoord[1],
+      currentCoord[0],
+    ]);
+    currentCoord.push(elevationLayer.getValueAtPoint(containerPoint));
+  });
+
+  let distance = turf.length(geoJSONLine).toFixed(1);
+  let { elevationGain, elevationLoss } = sumElevation(chunkedGeoJSONLine);
+  map.on('click', () => console.log('click outside'));
+
+  var elevation_options = {
+    theme: 'lime-theme',
+    detached: false,
+    // elevationDiv: '#elevationDiv', // if (detached), the elevation chart container
+    autohide: true, // if (!detached) autohide chart profile on chart mouseleave
+    collapsed: false, // if (!detached) initial state of chart profile control
+    position: 'topright', // if (!detached) control position on one of map corners
+    followMarker: false, // Autoupdate map center on chart mouseover.
+    imperial: false, // Chart distance/elevation units.
+    reverseCoords: false, // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
+    summary: false,
+    legend: false,
+    width: 400,
+    height: 150,
+    responsive: true,
+  };
+  let controlElevation = L.control.elevation(elevation_options).addTo(map);
+  controlElevation.loadData(chunkedGeoJSONLine);
+
+  currentLayer.bindPopup(() => {
+    return `Distanse: ${distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
+  });
+
+  map.on('click', () => {
+    controlElevation._container.style.display = 'none';
+    controlElevation.layer.remove();
+
+    e.layer.on('click', () => {
+      controlElevation._container.style.display = 'block';
+      controlElevation.layer.addTo(map);
+    });
+  });
+});
+
+// TO DO
+// Fix elevationlayer so that i covers whole track
+
+function sumElevation(geoJSONLine) {
+  let elevationGain = 0;
+  let elevationLoss = 0;
+
+  let elevations = geoJSONLine.geometry.coordinates.map(coord => coord[2]);
+  let prevElevation = elevations.shift();
+
+  elevations.forEach(elevation => {
+    diff = elevation - prevElevation;
+
+    if (diff > 0) {
+      elevationGain += diff;
+    } else {
+      elevationLoss += diff;
+    }
+
+    prevElevation = elevation;
+  });
+
+  return {
+    elevationGain: Math.round(elevationGain),
+    elevationLoss: Math.round(-elevationLoss),
+  };
+}
