@@ -53,7 +53,9 @@ map.pm.setGlobalOptions({
   allowSelfIntersection: true,
   markerStyle: { draggable: false },
 });
+
 let activeOverlay;
+let selectedRouteLayer;
 
 L.control.scale({ imperial: false, maxWidth: 200 }).addTo(map);
 L.control
@@ -281,32 +283,38 @@ map.on('pm:drawstart', e => {
     }
   });
 });
+
+let routeLayers = L.featureGroup();
+map.on('click', e => {
+  routeLayers.eachLayer(function(layer) {
+    hideElevationProfile(layer);
+  });
+});
+
 map.on('pm:create', e => {
   elevationDataLayer.remove();
-  let controlElevationProfile = L.control.elevation(elevation_options);
-  controlElevationProfile.addTo(map).loadData(lineString);
+  routeLayers.addLayer(e.layer);
 
-  let distance = turf.length(lineString).toFixed(1);
+  e.layer.controlElevationProfile = L.control.elevation(elevation_options);
+  e.layer.controlElevationProfile.addTo(map).loadData(lineString);
+
+  e.layer.distance = turf.length(lineString).toFixed(1);
+
+  // add this to e.layer
   let { elevationGain, elevationLoss } = sumElevation(lineString);
 
   e.layer
     .bindPopup(() => {
-      return `Distanse: ${distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
+      return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
     })
     .openPopup();
 
   map.off('mousemove');
 
-  map.on('click', () => {
-    controlElevationProfile._container.style.display = 'none';
-    controlElevationProfile.layer.remove();
-
-    e.layer.on('click', () => {
-      console.log(controlElevationProfile);
-      controlElevationProfile._container.style.display = 'block';
-      controlElevationProfile.layer.addTo(map);
-    });
+  e.layer.on('click', e => {
+    showElevationProfile(e.target);
   });
+
   lineString = undefined;
 });
 
@@ -341,10 +349,16 @@ function addPointsToLineString(lineString, distance) {
   return turf.cleanCoords(messyLineString);
 }
 
-// function removeElevation(geoJSON) {
-//   newGeoJSON = { ...geoJSON };
-//   turf.coordEach(newGeoJSON, coord => {
-//     coord.splice(2, 1);
-//   });
-//   return newGeoJSON;
-// }
+function hideElevationProfile(layer) {
+  layer.controlElevationProfile._container.style.display = 'none';
+  layer.controlElevationProfile.layer.remove();
+}
+
+function showElevationProfile(layer) {
+  if (selectedRouteLayer) {
+    hideElevationProfile(selectedRouteLayer);
+  }
+  layer.controlElevationProfile._container.style.display = 'block';
+  layer.controlElevationProfile.layer.addTo(map);
+  selectedRouteLayer = layer;
+}
