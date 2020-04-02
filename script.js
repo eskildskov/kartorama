@@ -212,11 +212,54 @@ slider.slider.addEventListener('click', function() {
   localStorage.setItem('currentOpacity', slider.slider.value);
 });
 
+L.Control.FileLayerLoad.LABEL =
+  '<img class="icon" src="assets/file-upload.svg" alt="file icon"/>';
+
 var fileLayer = L.Control.fileLayerLoad({
   layer: L.geoJson,
   layerOptions: { style: { color: 'red' } },
   position: 'topleft',
+  // fitBounds: false,
 }).addTo(map);
+
+fileLayer.loader.on('data:loaded', function(e) {
+  map.once('zoomend moveend', () => {
+    elevationDataLayer.addTo(map);
+    routeLayers.addLayer(e.layer);
+    e.layer.on('click', e => {
+      showElevationProfile(e.target);
+    });
+
+    let geoJSON = e.layer.toGeoJSON();
+    let hasLoaded = false; // it loads two times for some reason I cant figure out
+
+    elevationDataLayer.once('load', () => {
+      console.log('elevationdatalayer loaded');
+
+      turf.coordEach(geoJSON, coord => {
+        let containerPoint = map.latLngToContainerPoint([coord[1], coord[0]]);
+
+        // TO DO: implement missing data handling!
+        coord.push(elevationDataLayer.getValueAtPoint(containerPoint));
+      });
+
+      // TO DO refactor this to a function
+      e.layer.controlElevationProfile = L.control.elevation(elevation_options);
+      e.layer.controlElevationProfile.addTo(map).loadData(geoJSON);
+
+      e.layer.distance = turf.length(geoJSON).toFixed(1);
+
+      // add this to e.layer
+      let { elevationGain, elevationLoss } = sumElevation(geoJSON);
+
+      e.layer
+        .bindPopup(() => {
+          return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
+        })
+        .openPopup();
+    });
+  });
+});
 
 L.control.locate({ position: 'bottomleft', initialZoomLevel: 15 }).addTo(map);
 
@@ -322,7 +365,7 @@ function sumElevation(lineString) {
   let elevationGain = 0;
   let elevationLoss = 0;
 
-  let elevations = lineString.geometry.coordinates.map(coord => coord[2]);
+  let elevations = turf.coordAll(lineString).map(coord => coord[2]);
   let prevElevation = elevations.shift();
 
   elevations.forEach(elevation => {
@@ -352,6 +395,7 @@ function addPointsToLineString(lineString, distance) {
 function hideElevationProfile(layer) {
   layer.controlElevationProfile._container.style.display = 'none';
   layer.controlElevationProfile.layer.remove();
+  elevationDataLayer.remove();
 }
 
 function showElevationProfile(layer) {
