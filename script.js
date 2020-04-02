@@ -50,7 +50,7 @@ let overlayMaps = {
 let map = L.map('map', { zoomControl: false });
 map.pm.setGlobalOptions({
   tooltips: false,
-  allowSelfIntersection: false,
+  allowSelfIntersection: true,
   markerStyle: { draggable: false },
 });
 let activeOverlay;
@@ -109,9 +109,10 @@ map.pm.addControls({
   drawPolyline: true,
 });
 
+// TO DO combine!
 map.on('pm:drawstart', ({ workingLayer }) => {
   let currentDistance = 0;
-  let tooltip = L.tooltip().setContent('sadsdf');
+  let tooltip = L.tooltip();
   workingLayer.bindTooltip(tooltip);
 
   workingLayer.on('pm:vertexadded', e => {
@@ -131,16 +132,6 @@ map.on('pm:drawstart', ({ workingLayer }) => {
       workingLayer.openTooltip(e.latlng);
     });
   });
-});
-
-map.on('pm:create', e => {
-  let currentLayer = e.layer;
-  let distance = turf.length(currentLayer.toGeoJSON()).toFixed(1);
-  currentLayer.bindPopup(`${distance} km`).openPopup();
-});
-
-map.on('pm:drawend', () => {
-  map.off('mousemove');
 });
 
 let controlLayersOptions = {
@@ -227,7 +218,7 @@ var fileLayer = L.Control.fileLayerLoad({
 
 L.control.locate({ position: 'bottomleft', initialZoomLevel: 15 }).addTo(map);
 
-let elevationLayer = L.nonTiledLayer.wcs(
+let elevationDataLayer = L.nonTiledLayer.wcs(
   'https://openwms.statkart.no/skwms1/wcs.dtm?',
   {
     wcsOptions: {
@@ -237,73 +228,93 @@ let elevationLayer = L.nonTiledLayer.wcs(
   }
 );
 
-map.on('pm:drawstart', () => elevationLayer.addTo(map));
+var elevation_options = {
+  theme: 'lime-theme',
+  detached: false,
+  // elevationDiv: '#elevationDiv', // if (detached), the elevation chart container
+  autohide: true, // if (!detached) autohide chart profile on chart mouseleave
+  collapsed: false, // if (!detached) initial state of chart profile control
+  position: 'topright', // if (!detached) control position on one of map corners
+  followMarker: false, // Autoupdate map center on chart mouseover.
+  imperial: false, // Chart distance/elevation units.
+  reverseCoords: false, // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
+  summary: false,
+  legend: false,
+  width: 400,
+  height: 150,
+  responsive: true,
+};
+let lineString = undefined;
 
-map.on('pm:drawend', () => elevationLayer.remove());
+map.on('pm:drawstart', e => {
+  elevationDataLayer.addTo(map);
+  let drawingLayer = e.workingLayer;
+  let prevLatlng;
 
-map.on('pm:create', e => {
-  let currentLayer = e.layer;
+  drawingLayer.on('pm:vertexadded', e => {
+    let currentLatlng = e.latlng;
+    if (!prevLatlng) {
+      prevLatlng = currentLatlng;
+      return;
+    }
+    tempLineString = turf.lineString(
+      L.GeoJSON.latLngsToCoords([prevLatlng, currentLatlng])
+    );
+    tempLineString = addPointsToLineString(tempLineString, 0.2);
 
-  // make linestring with point x?? meter
-  let geoJSONLine = e.layer.toGeoJSON();
-  let chunkedGeoJSONLine = turf.lineChunk(geoJSONLine, 0.5);
-  chunkedGeoJSONLine = turf.lineString(turf.coordAll(chunkedGeoJSONLine));
+    // add elevation to the Linestring
+    turf.coordEach(tempLineString, coord => {
+      let containerPoint = map.latLngToContainerPoint([coord[1], coord[0]]);
 
-  // add elevation to the Linestring
-  turf.coordEach(chunkedGeoJSONLine, currentCoord => {
-    let containerPoint = map.latLngToContainerPoint([
-      currentCoord[1],
-      currentCoord[0],
-    ]);
-    currentCoord.push(elevationLayer.getValueAtPoint(containerPoint));
-  });
-
-  let distance = turf.length(geoJSONLine).toFixed(1);
-  let { elevationGain, elevationLoss } = sumElevation(chunkedGeoJSONLine);
-  map.on('click', () => console.log('click outside'));
-
-  var elevation_options = {
-    theme: 'lime-theme',
-    detached: false,
-    // elevationDiv: '#elevationDiv', // if (detached), the elevation chart container
-    autohide: true, // if (!detached) autohide chart profile on chart mouseleave
-    collapsed: false, // if (!detached) initial state of chart profile control
-    position: 'topright', // if (!detached) control position on one of map corners
-    followMarker: false, // Autoupdate map center on chart mouseover.
-    imperial: false, // Chart distance/elevation units.
-    reverseCoords: false, // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
-    summary: false,
-    legend: false,
-    width: 400,
-    height: 150,
-    responsive: true,
-  };
-  let controlElevation = L.control.elevation(elevation_options).addTo(map);
-  controlElevation.loadData(chunkedGeoJSONLine);
-
-  currentLayer.bindPopup(() => {
-    return `Distanse: ${distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
-  });
-
-  map.on('click', () => {
-    controlElevation._container.style.display = 'none';
-    controlElevation.layer.remove();
-
-    e.layer.on('click', () => {
-      controlElevation._container.style.display = 'block';
-      controlElevation.layer.addTo(map);
+      // TO DO: implement missing data handling!
+      coord.push(elevationDataLayer.getValueAtPoint(containerPoint));
     });
+
+    prevLatlng = currentLatlng;
+
+    if (!lineString) {
+      lineString = tempLineString;
+    } else {
+      lineString.geometry.coordinates = lineString.geometry.coordinates.concat(
+        turf.coordAll(tempLineString)
+      );
+    }
   });
 });
+map.on('pm:create', e => {
+  elevationDataLayer.remove();
+  let controlElevationProfile = L.control.elevation(elevation_options);
+  controlElevationProfile.addTo(map).loadData(lineString);
 
-// TO DO
-// Fix elevationlayer so that i covers whole track
+  let distance = turf.length(lineString).toFixed(1);
+  let { elevationGain, elevationLoss } = sumElevation(lineString);
 
-function sumElevation(geoJSONLine) {
+  e.layer
+    .bindPopup(() => {
+      return `Distanse: ${distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
+    })
+    .openPopup();
+
+  map.off('mousemove');
+
+  map.on('click', () => {
+    controlElevationProfile._container.style.display = 'none';
+    controlElevationProfile.layer.remove();
+
+    e.layer.on('click', () => {
+      console.log(controlElevationProfile);
+      controlElevationProfile._container.style.display = 'block';
+      controlElevationProfile.layer.addTo(map);
+    });
+  });
+  lineString = undefined;
+});
+
+function sumElevation(lineString) {
   let elevationGain = 0;
   let elevationLoss = 0;
 
-  let elevations = geoJSONLine.geometry.coordinates.map(coord => coord[2]);
+  let elevations = lineString.geometry.coordinates.map(coord => coord[2]);
   let prevElevation = elevations.shift();
 
   elevations.forEach(elevation => {
@@ -323,3 +334,17 @@ function sumElevation(geoJSONLine) {
     elevationLoss: Math.round(-elevationLoss),
   };
 }
+
+function addPointsToLineString(lineString, distance) {
+  chunkedLineString = turf.lineChunk(lineString, distance);
+  messyLineString = turf.lineString(turf.coordAll(chunkedLineString));
+  return turf.cleanCoords(messyLineString);
+}
+
+// function removeElevation(geoJSON) {
+//   newGeoJSON = { ...geoJSON };
+//   turf.coordEach(newGeoJSON, coord => {
+//     coord.splice(2, 1);
+//   });
+//   return newGeoJSON;
+// }
