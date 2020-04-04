@@ -52,6 +52,7 @@ map.pm.setGlobalOptions({
   tooltips: false,
   allowSelfIntersection: true,
   markerStyle: { draggable: false },
+  finishOn: null,
 });
 
 let activeOverlay;
@@ -219,7 +220,7 @@ var fileLayer = L.Control.fileLayerLoad({
   layer: L.geoJson,
   layerOptions: { style: { color: 'red' } },
   position: 'topleft',
-  // fitBounds: false,
+  fileSizeLimit: 4000,
 }).addTo(map);
 
 fileLayer.loader.on('data:loaded', function(e) {
@@ -231,11 +232,8 @@ fileLayer.loader.on('data:loaded', function(e) {
     });
 
     let geoJSON = e.layer.toGeoJSON();
-    let hasLoaded = false; // it loads two times for some reason I cant figure out
 
     elevationDataLayer.once('load', () => {
-      console.log('elevationdatalayer loaded');
-
       turf.coordEach(geoJSON, coord => {
         let containerPoint = map.latLngToContainerPoint([coord[1], coord[0]]);
 
@@ -292,68 +290,84 @@ var elevation_options = {
 let lineString = undefined;
 
 map.on('pm:drawstart', e => {
-  elevationDataLayer.addTo(map);
+  // elevationDataLayer.addTo(map);
   let drawingLayer = e.workingLayer;
   let prevLatlng;
 
-  drawingLayer.on('pm:vertexadded', e => {
-    let currentLatlng = e.latlng;
-    if (!prevLatlng) {
-      prevLatlng = currentLatlng;
-      return;
-    }
-    tempLineString = turf.lineString(
-      L.GeoJSON.latLngsToCoords([prevLatlng, currentLatlng])
-    );
-    tempLineString = addPointsToLineString(tempLineString, 0.2);
+  //   drawingLayer.on('pm:vertexadded', e => {
+  //     let currentLatlng = e.latlng;
+  //     if (!prevLatlng) {
+  //       prevLatlng = currentLatlng;
+  //       return;
+  //     }
+  //     tempLineString = turf.lineString(
+  //       L.GeoJSON.latLngsToCoords([prevLatlng, currentLatlng])
+  //     );
+  //     tempLineString = addPointsToLineString(tempLineString, 0.2);
 
-    // add elevation to the Linestring
-    turf.coordEach(tempLineString, coord => {
-      let containerPoint = map.latLngToContainerPoint([coord[1], coord[0]]);
+  //     // add elevation to the Linestring
+  //     turf.coordEach(tempLineString, coord => {
+  //       let containerPoint = map.latLngToContainerPoint([coord[1], coord[0]]);
 
-      // TO DO: implement missing data handling!
-      coord.push(elevationDataLayer.getValueAtPoint(containerPoint));
-    });
+  //       // TO DO: implement missing data handling!
+  //       coord.push(elevationDataLayer.getValueAtPoint(containerPoint));
+  //     });
 
-    prevLatlng = currentLatlng;
+  //     prevLatlng = currentLatlng;
 
-    if (!lineString) {
-      lineString = tempLineString;
-    } else {
-      lineString.geometry.coordinates = lineString.geometry.coordinates.concat(
-        turf.coordAll(tempLineString)
-      );
-    }
-  });
+  //     if (!lineString) {
+  //       lineString = tempLineString;
+  //     } else {
+  //       lineString.geometry.coordinates = lineString.geometry.coordinates.concat(
+  //         turf.coordAll(tempLineString)
+  //       );
+  //     }
+  //   });
 });
 
 let routeLayers = L.featureGroup();
-map.on('click', e => {
+map.on('click', () => {
   routeLayers.eachLayer(function(layer) {
     hideElevationProfile(layer);
   });
 });
 
 map.on('pm:create', e => {
-  elevationDataLayer.remove();
   routeLayers.addLayer(e.layer);
+  let geoJSON = e.layer.toGeoJSON();
 
-  e.layer.controlElevationProfile = L.control.elevation(elevation_options);
-  e.layer.controlElevationProfile.addTo(map).loadData(lineString);
+  map.once('zoomend moveend', () => {
+    elevationDataLayer.addTo(map);
 
-  e.layer.distance = turf.length(lineString).toFixed(1);
+    elevationDataLayer.once('load', () => {
+      geoJSON = addPointsToLineString(geoJSON, 0.2);
 
-  // add this to e.layer
-  let { elevationGain, elevationLoss } = sumElevation(lineString);
+      turf.coordEach(geoJSON, coord => {
+        let containerPoint = map.latLngToContainerPoint([coord[1], coord[0]]);
 
-  e.layer
-    .bindPopup(() => {
-      return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
-    })
-    .openPopup();
+        // TO DO: implement missing data handling!
+        coord.push(elevationDataLayer.getValueAtPoint(containerPoint));
+      });
 
+      elevationDataLayer.remove();
+      // TO DO refactor this to a function
+      e.layer.controlElevationProfile = L.control.elevation(elevation_options);
+      e.layer.controlElevationProfile.addTo(map).loadData(geoJSON);
+
+      e.layer.distance = turf.length(geoJSON).toFixed(1);
+
+      // add this to e.layer
+      let { elevationGain, elevationLoss } = sumElevation(geoJSON);
+
+      e.layer
+        .bindPopup(() => {
+          return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
+        })
+        .openPopup();
+    });
+  });
   map.off('mousemove');
-
+  map.fitBounds(e.layer.getBounds());
   e.layer.on('click', e => {
     showElevationProfile(e.target);
   });
