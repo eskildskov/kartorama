@@ -1,12 +1,15 @@
-import * as L from 'leaflet'
+import L from 'leaflet'
 import { dynamicMapLayer } from 'esri-leaflet'
 import '@geoman-io/leaflet-geoman-free'
 import './vendor/leaflet-slider'
 import 'leaflet-groupedlayercontrol'
-import 'leaflet-filelayer' // heeeelp!
+import * as FileLayer from 'leaflet-filelayer'
 import 'leaflet.locatecontrol'
 import './vendor/NonTiledLayer.WCS'
 import * as turf from '@turf/turf' // needs slimming
+import './styles/index.scss'
+import togeojson from './vendor/togeojson'
+import '@raruto/leaflet-elevation'
 
 const localStorage = window.localStorage
 
@@ -220,53 +223,61 @@ slider.slider.addEventListener('click', function () {
   localStorage.setItem('currentOpacity', slider.slider.value)
 })
 
-// L.Control.FileLayerLoad.LABEL =
-//   '<img class="icon" src="assets/file-upload.svg" alt="file icon"/>';
+// hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
+FileLayer(null, L, togeojson)
 
-// var fileLayer = L.Control.fileLayerLoad({
-//   layer: L.geoJson,
-//   layerOptions: { style: { color: 'red' } },
-//   position: 'topleft',
-//   fileSizeLimit: 4000,
-// }).addTo(map);
+L.Control.FileLayerLoad.LABEL = ''
 
-// fileLayer.loader.on('data:loaded', function(e) {
-//   map.once('zoomend moveend', () => {
-//     elevationDataLayer.addTo(map);
-//     routeLayers.addLayer(e.layer);
-//     e.layer.on('click', e => {
-//       showElevationProfile(e.target);
-//     });
+const fileLayer = L.Control.fileLayerLoad({
+  layer: L.geoJson,
+  layerOptions: { style: { color: 'red' } },
+  position: 'topleft',
+  fileSizeLimit: 4000
+}).addTo(map)
 
-//     let geoJSON = e.layer.toGeoJSON();
+fileLayer.loader.on('data:loaded', function (e) {
+  map.once('zoomend moveend', () => {
+    elevationDataLayer.addTo(map)
+    routeLayers.addLayer(e.layer)
+    e.layer.on('click', e => {
+      showElevationProfile(e.target)
+    })
 
-//     elevationDataLayer.once('load', () => {
-//       turf.coordEach(geoJSON, coord => {
-//         let containerPoint = map.latLngToContainerPoint([coord[1], coord[0]]);
+    const geoJSON = e.layer.toGeoJSON()
 
-//         // TO DO: implement missing data handling!
-//         coord.push(elevationDataLayer.getValueAtPoint(containerPoint));
-//       });
+    elevationDataLayer.once('load', () => {
+      turf.coordEach(geoJSON, coord => {
+        const containerPoint = map.latLngToContainerPoint([coord[1], coord[0]])
 
-//       // TO DO refactor this to a function
-//       e.layer.controlElevationProfile = L.control.elevation(elevationOptions);
-//       e.layer.controlElevationProfile.addTo(map).loadData(geoJSON);
+        // TO DO: implement missing data handling!
+        coord.push(elevationDataLayer.getValueAtPoint(containerPoint))
+      })
 
-//       e.layer.distance = turf.length(geoJSON).toFixed(1);
+      // TO DO refactor this to a function
+      e.layer.controlElevationProfile = L.control.elevation(elevationOptions)
+      e.layer.controlElevationProfile.addTo(map).loadData(geoJSON)
 
-//       // add this to e.layer
-//       let { elevationGain, elevationLoss } = sumElevation(geoJSON);
+      e.layer.distance = turf.length(geoJSON).toFixed(1)
 
-//       e.layer
-//         .bindPopup(() => {
-//           return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`;
-//         })
-//         .openPopup();
-//     });
-//   });
-// });
+      // add this to e.layer
+      const { elevationGain, elevationLoss } = sumElevation(geoJSON)
 
-L.control.locate({ position: 'bottomleft', initialZoomLevel: 15 }).addTo(map)
+      e.layer
+        .bindPopup(() => {
+          return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`
+        })
+        .openPopup()
+    })
+  })
+})
+
+L.control
+  .locate({
+    position: 'bottomleft',
+    initialZoomLevel: 15,
+    icon: 'fa fa-map-marker-alt'
+  })
+  .addTo(map)
 
 const elevationDataLayer = L.nonTiledLayer.wcs(
   'https://openwms.statkart.no/skwms1/wcs.dtm?',

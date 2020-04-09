@@ -1,7 +1,15 @@
+@import '~leaflet/dist/leaflet.css';
+@import '~leaflet.locatecontrol/src/L.Control.Locate.scss';
+@import '~@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+@import '~@fortawesome/fontawesome-free/css/all.css';
+@import 'leaflet-slider.css';
+@import '~@raruto/leaflet-elevation/src/leaflet-elevation.css';
+
 body {
   padding: 0;
   margin: 0;
 }
+
 html,
 body,
 #map {
