@@ -1,5 +1,5 @@
 import 'leaflet.nontiledlayer'
-import './geotiff.js'
+import './geotiff.js' // help!!
 
 /*
  * L.NonTiledLayer.WCS is used for putting WCS non tiled layers on the map.

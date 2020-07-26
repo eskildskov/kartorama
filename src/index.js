@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import { dynamicMapLayer } from 'esri-leaflet'
 import '@geoman-io/leaflet-geoman-free'
-import './vendor/leaflet-slider'
+import './vendor/leaflet-slider/leaflet-slider'
 import 'leaflet-groupedlayercontrol'
 import * as FileLayer from 'leaflet-filelayer'
 import 'leaflet.locatecontrol'
@@ -10,6 +10,7 @@ import * as turf from '@turf/turf' // needs slimming
 import './styles/index.scss'
 import togeojson from './vendor/togeojson'
 import '@raruto/leaflet-elevation'
+// import addElevationToGeoJSON from './add-elevation'
 
 const localStorage = window.localStorage
 
@@ -18,7 +19,7 @@ const attributionKartverket =
 const attributionNVE = '<a href="https://www.nve.no/">NVE</a>'
 
 const rasterBaseMap = L.tileLayer(
-  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster3&zoom={z}&x={x}&y={y}',
+  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster4&zoom={z}&x={x}&y={y}',
   {
     attribution: attributionKartverket
   }
@@ -235,6 +236,10 @@ const fileLayer = L.Control.fileLayerLoad({
   fileSizeLimit: 4000
 }).addTo(map)
 
+fileLayer.loader.on('data:error', function (error) {
+  console.error(error)
+})
+
 fileLayer.loader.on('data:loaded', function (e) {
   map.once('zoomend moveend', () => {
     elevationDataLayer.addTo(map)
@@ -244,7 +249,7 @@ fileLayer.loader.on('data:loaded', function (e) {
     })
 
     const geoJSON = e.layer.toGeoJSON()
-
+    console.log(geoJSON)
     elevationDataLayer.once('load', () => {
       turf.coordEach(geoJSON, coord => {
         const containerPoint = map.latLngToContainerPoint([coord[1], coord[0]])
@@ -316,37 +321,23 @@ map.on('click', () => {
 map.on('pm:create', e => {
   routeLayers.addLayer(e.layer)
   let geoJSON = e.layer.toGeoJSON()
+  geoJSON = addPointsToLineString(geoJSON, 0.2)
+  e.layer.distance = turf.length(geoJSON).toFixed(1)
 
-  map.once('zoomend moveend', () => {
-    elevationDataLayer.addTo(map)
+  const elevationData = new AddElevationToGeoJSON(geoJSON)
+  elevationData.geoJSONWithElevation().then(geoJSONWithElevation => {
+    // TO DO refactor this to a function
+    e.layer.controlElevationProfile = L.control.elevation(elevationOptions)
+    e.layer.controlElevationProfile.addTo(map).loadData(geoJSONWithElevation)
+    const { elevationGain, elevationLoss } = sumElevation(geoJSONWithElevation)
 
-    elevationDataLayer.once('load', () => {
-      geoJSON = addPointsToLineString(geoJSON, 0.2)
-
-      turf.coordEach(geoJSON, coord => {
-        const containerPoint = map.latLngToContainerPoint([coord[1], coord[0]])
-
-        // TO DO: implement missing data handling!
-        coord.push(elevationDataLayer.getValueAtPoint(containerPoint))
+    e.layer
+      .bindPopup(() => {
+        return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`
       })
-
-      elevationDataLayer.remove()
-      // TO DO refactor this to a function
-      e.layer.controlElevationProfile = L.control.elevation(elevationOptions)
-      e.layer.controlElevationProfile.addTo(map).loadData(geoJSON)
-
-      e.layer.distance = turf.length(geoJSON).toFixed(1)
-
-      // add this to e.layer
-      const { elevationGain, elevationLoss } = sumElevation(geoJSON)
-
-      e.layer
-        .bindPopup(() => {
-          return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`
-        })
-        .openPopup()
-    })
+      .openPopup()
   })
+
   map.off('mousemove')
   map.fitBounds(e.layer.getBounds())
   e.layer.on('click', e => {
@@ -382,7 +373,7 @@ function sumElevation (lineString) {
 function addPointsToLineString (lineString, distance) {
   const chunkedLineString = turf.lineChunk(lineString, distance)
   const messyLineString = turf.lineString(turf.coordAll(chunkedLineString))
-  return turf.cleanCoords(messyLineString)
+  return messyLineString
 }
 
 function hideElevationProfile (layer) {
@@ -398,4 +389,58 @@ function showElevationProfile (layer) {
   layer.controlElevationProfile._container.style.display = 'block'
   layer.controlElevationProfile.layer.addTo(map)
   selectedRouteLayer = layer
+}
+
+class AddElevationToGeoJSON {
+  constructor (geoJSON) {
+    this.geoJSON = geoJSON
+  }
+
+  async geoJSONWithElevation () {
+    const elevationData = await this.fetchElevationData()
+    const geoJSONWithElevation = this.addElevationtoGeoJSON(
+      this.geoJSON,
+      elevationData
+    )
+    return geoJSONWithElevation
+  }
+
+  async fetchElevationData () {
+    // Return FeatureCollection with the elevation data
+
+    const url = this.generateWMSUrl(this.geoJSON)
+    const response = await fetch(url)
+    const txt = await response.text()
+    const rows = txt.trim().split('\n')
+
+    let points = []
+    rows.forEach(string => {
+      let lonLatEle = string.split(' ')
+      lonLatEle = lonLatEle.map(string => parseFloat(string))
+      points.push(turf.point(lonLatEle))
+    })
+
+    points = turf.featureCollection(points)
+    return points
+  }
+
+  addElevationtoGeoJSON (geoJSON, points) {
+    turf.coordEach(geoJSON, coord => {
+      const elevation = this.elevationAt(coord[0], coord[1], points)
+      coord[2] = elevation
+    })
+    return geoJSON
+  }
+
+  elevationAt (lon, lat, points) {
+    const nearest = turf.nearestPoint(turf.point([lon, lat]), points)
+    const elevation = turf.getCoord(nearest)[2]
+    return elevation
+  }
+
+  generateWMSUrl (geoJSON) {
+    const bbox = turf.bbox(geoJSON)
+    const bboxString = bbox.join(',')
+    return `https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=xyz&COLORSCALE=false&CRS=EPSG:4326&WIDTH=200&HEIGHT=200&BBOX=${bboxString}`
+  }
 }
