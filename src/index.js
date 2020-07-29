@@ -66,7 +66,7 @@ const overlayMaps = {
 const map = L.map('map', { zoomControl: false })
 
 map.pm.setGlobalOptions({
-  tooltips: false,
+  tooltips: true,
   allowSelfIntersection: true,
   markerStyle: { draggable: false },
   finishOn: null
@@ -331,11 +331,22 @@ map.on('pm:create', e => {
     e.layer.controlElevationProfile.addTo(map).loadData(geoJSONWithElevation)
     const { elevationGain, elevationLoss } = sumElevation(geoJSONWithElevation)
 
-    e.layer
-      .bindPopup(() => {
-        return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`
-      })
-      .openPopup()
+    const popupElement = document.createElement('p')
+    popupElement.innerHTML = `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m. `
+
+    const removeLayerLink = document.createElement('a')
+    removeLayerLink.innerText = 'Slett spor'
+    removeLayerLink.href = '#'
+    removeLayerLink.onclick = () => {
+      hideElevationProfile(e.layer)
+      e.layer.remove()
+    }
+    popupElement.append(removeLayerLink)
+
+    e.layer.bindPopup(popupElement).openPopup()
+    routeLayers.eachLayer(layer => {
+      console.log(layer.toGeoJSON())
+    })
   })
 
   map.off('mousemove')
