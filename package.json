@@ -9,7 +9,7 @@
     "heroku-postbuild": "npm run build"
   },
   "engines": {
-    "node": "13.x"
+    "node": "14.x"
   },
   "keywords": [],
   "author": "Eskild Skov Pedersen",
