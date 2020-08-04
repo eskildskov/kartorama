@@ -29,7 +29,7 @@ module.exports = merge(common, {
     open: true,
     compress: true,
     hot: true,
-    port: 8080,
+    port: 8080
   },
 
   plugins: [
@@ -38,6 +38,11 @@ module.exports = merge(common, {
      *
      * Only update what has changed.
      */
-    new webpack.HotModuleReplacementPlugin(),
+    new webpack.HotModuleReplacementPlugin()
   ],
+  node: {
+    // For geotiff to build
+    // https://github.com/geotiffjs/geotiff.js/issues/98
+    fs: 'empty'
+  }
 })

@@ -5,18 +5,28 @@ import './vendor/leaflet-slider/leaflet-slider'
 import 'leaflet-groupedlayercontrol'
 import * as FileLayer from 'leaflet-filelayer'
 import 'leaflet.locatecontrol'
-import './vendor/NonTiledLayer.WCS'
 import * as turf from '@turf/turf' // needs slimming
 import './styles/index.scss'
 import togeojson from './vendor/togeojson'
 import '@raruto/leaflet-elevation'
-// import addElevationToGeoJSON from './add-elevation'
+import * as GeoTIFF from 'geotiff/dist-browser/geotiff'
+
+// import AddElevationToGeoJSON from './add-elevation'
 
 const localStorage = window.localStorage
-
+const map = L.map('map', { zoomControl: false })
 const attributionKartverket =
   '<a href="http://www.kartverket.no/">Kartverket</a>'
 const attributionNVE = '<a href="https://www.nve.no/">NVE</a>'
+// hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
+FileLayer(null, L, togeojson)
+
+//
+// LAYERS
+//
+
+let activeOverlay
+let selectedRouteLayer
 
 const rasterBaseMap = L.tileLayer(
   'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster4&zoom={z}&x={x}&y={y}',
@@ -63,57 +73,60 @@ const overlayMaps = {
   AutoKAST: kastOverlayMap
 }
 
-const map = L.map('map', { zoomControl: false })
+const groupedOverlays = {
+  Tillegg: {
+    Helning: steepnessOverlayMap,
+    AutoKAST: kastOverlayMap
+  }
+}
 
+//
+// INIT MAP AND LAYERS WITH SAVED STATE
+//
+const activeBaseLayerName = localStorage.getItem('activeBaseLayerName')
+  ? localStorage.getItem('activeBaseLayerName')
+  : 'Vektorkart'
+if (activeBaseLayerName) {
+  map.addLayer(baseMaps[activeBaseLayerName])
+}
+
+const activeOverlayName = localStorage.getItem('activeOverlayName')
+  ? localStorage.getItem('activeOverlayName')
+  : 'Helning'
+localStorage.removeItem('activeOverlayName')
+map.addLayer(overlayMaps[activeOverlayName])
+activeOverlay = overlayMaps[activeOverlayName]
+
+const currentOpacity = localStorage.getItem('currentOpacity')
+  ? localStorage.getItem('currentOpacity')
+  : 0
+activeOverlay.setOpacity(currentOpacity)
+
+const center = localStorage.getItem('currentCenter')
+  ? JSON.parse(localStorage.getItem('currentCenter'))
+  : [62.5661863495104, 7.7187538146972665]
+
+const zoom = localStorage.getItem('currentZoom')
+  ? localStorage.getItem('currentZoom')
+  : 8
+
+map.setView(center, zoom)
+
+// DRAWING OPTIONS
 map.pm.setGlobalOptions({
-  tooltips: true,
+  tooltips: false,
   allowSelfIntersection: true,
   markerStyle: { draggable: false },
   finishOn: null
 })
 
-let activeOverlay
-let selectedRouteLayer
-
+// SET CONTROLS IN RIGHT ORDER
 L.control.scale({ imperial: false, maxWidth: 200 }).addTo(map)
 L.control
   .zoom({
     position: 'bottomleft'
   })
   .addTo(map)
-
-function initMap () {
-  const activeBaseLayerName = localStorage.getItem('activeBaseLayerName')
-    ? localStorage.getItem('activeBaseLayerName')
-    : 'Vektorkart'
-  if (activeBaseLayerName) {
-    map.addLayer(baseMaps[activeBaseLayerName])
-  }
-
-  const activeOverlayName = localStorage.getItem('activeOverlayName')
-    ? localStorage.getItem('activeOverlayName')
-    : 'Helning'
-  localStorage.removeItem('activeOverlayName')
-  map.addLayer(overlayMaps[activeOverlayName])
-  activeOverlay = overlayMaps[activeOverlayName]
-
-  const currentOpacity = localStorage.getItem('currentOpacity')
-    ? localStorage.getItem('currentOpacity')
-    : 0
-  activeOverlay.setOpacity(currentOpacity)
-
-  const center = localStorage.getItem('currentCenter')
-    ? JSON.parse(localStorage.getItem('currentCenter'))
-    : [62.5661863495104, 7.7187538146972665]
-
-  const zoom = localStorage.getItem('currentZoom')
-    ? localStorage.getItem('currentZoom')
-    : 8
-
-  map.setView(center, zoom)
-}
-
-initMap()
 
 map.pm.addControls({
   position: 'bottomleft',
@@ -129,37 +142,7 @@ map.pm.addControls({
   drawPolyline: true
 })
 
-// TO DO combine!
-map.on('pm:drawstart', ({ workingLayer }) => {
-  let currentDistance = 0
-  const tooltip = L.tooltip()
-  workingLayer.bindTooltip(tooltip)
-
-  workingLayer.on('pm:vertexadded', e => {
-    const lastPoint = e.latlng
-    const lineGeoJSON = workingLayer.toGeoJSON()
-    currentDistance = turf.length(lineGeoJSON)
-    workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`)
-    workingLayer.openTooltip(e.latlng)
-
-    map.on('mousemove', e => {
-      const currentPoint = e.latlng
-
-      const newDistance =
-        map.distance(currentPoint, lastPoint) / 1000 + currentDistance
-      workingLayer.setTooltipContent(`${newDistance.toFixed(1)} km`)
-      workingLayer.openTooltip(e.latlng)
-    })
-  })
-})
-
-const groupedOverlays = {
-  Tillegg: {
-    Helning: steepnessOverlayMap,
-    AutoKAST: kastOverlayMap
-  }
-}
-var slider = L.control
+const opacitySlider = L.control
   .slider(
     function (value) {
       activeOverlay.setOpacity(value)
@@ -186,6 +169,56 @@ L.control
   })
   .addTo(map)
 
+L.Control.FileLayerLoad.LABEL = ''
+
+const fileLayer = L.Control.fileLayerLoad({
+  layer: L.geoJson,
+  layerOptions: { style: { color: 'red' } },
+  position: 'topleft',
+  fileSizeLimit: 4000
+}).addTo(map)
+
+L.control
+  .locate({
+    position: 'bottomleft',
+    initialZoomLevel: 15,
+    icon: 'fa fa-map-marker-alt'
+  })
+  .addTo(map)
+
+// DRAWING
+// TO DO combine!
+map.on('pm:drawstart', ({ workingLayer }) => {
+  let currentDistance = 0
+  const tooltip = L.tooltip()
+  workingLayer.bindTooltip(tooltip)
+
+  workingLayer.on('pm:vertexadded', e => {
+    const lastPoint = e.latlng
+    const lineGeoJSON = workingLayer.toGeoJSON()
+    currentDistance = turf.length(lineGeoJSON)
+    workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`)
+    workingLayer.openTooltip(e.latlng)
+
+    map.on('mousemove', e => {
+      const currentPoint = e.latlng
+
+      const newDistance =
+        map.distance(currentPoint, lastPoint) / 1000 + currentDistance
+      workingLayer.setTooltipContent(`${newDistance.toFixed(1)} km`)
+      workingLayer.openTooltip(e.latlng)
+    })
+  })
+})
+
+//
+// SAVE STATE
+//
+
+opacitySlider.slider.addEventListener('click', function () {
+  localStorage.setItem('currentOpacity', opacitySlider.slider.value)
+})
+
 function savePosition (e) {
   localStorage.setItem('currentCenter', JSON.stringify(map.getCenter()))
 }
@@ -209,90 +242,26 @@ map.on('zoomend', saveZoom)
 
 function changeOverlayControl (e) {
   activeOverlay = e.layer
-  if (slider.slider.value === 0) {
+  if (opacitySlider.slider.value === 0) {
     const val = 0.2
     activeOverlay.setOpacity(val)
-    slider.slider.value = val
+    opacitySlider.slider.value = val
   } else {
-    activeOverlay.setOpacity(slider.slider.value)
+    activeOverlay.setOpacity(opacitySlider.slider.value)
   }
 }
 
 map.on('overlayadd', changeOverlayControl)
 
-slider.slider.addEventListener('click', function () {
-  localStorage.setItem('currentOpacity', slider.slider.value)
-})
-
-// hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
-FileLayer(null, L, togeojson)
-
-L.Control.FileLayerLoad.LABEL = ''
-
-const fileLayer = L.Control.fileLayerLoad({
-  layer: L.geoJson,
-  layerOptions: { style: { color: 'red' } },
-  position: 'topleft',
-  fileSizeLimit: 4000
-}).addTo(map)
+// FILE LOADER
 
 fileLayer.loader.on('data:error', function (error) {
   console.error(error)
 })
 
 fileLayer.loader.on('data:loaded', function (e) {
-  map.once('zoomend moveend', () => {
-    elevationDataLayer.addTo(map)
-    routeLayers.addLayer(e.layer)
-    e.layer.on('click', e => {
-      showElevationProfile(e.target)
-    })
-
-    const geoJSON = e.layer.toGeoJSON()
-    console.log(geoJSON)
-    elevationDataLayer.once('load', () => {
-      turf.coordEach(geoJSON, coord => {
-        const containerPoint = map.latLngToContainerPoint([coord[1], coord[0]])
-
-        // TO DO: implement missing data handling!
-        coord.push(elevationDataLayer.getValueAtPoint(containerPoint))
-      })
-
-      // TO DO refactor this to a function
-      e.layer.controlElevationProfile = L.control.elevation(elevationOptions)
-      e.layer.controlElevationProfile.addTo(map).loadData(geoJSON)
-
-      e.layer.distance = turf.length(geoJSON).toFixed(1)
-
-      // add this to e.layer
-      const { elevationGain, elevationLoss } = sumElevation(geoJSON)
-
-      e.layer
-        .bindPopup(() => {
-          return `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m.`
-        })
-        .openPopup()
-    })
-  })
+  addRouteHandler(e.layer)
 })
-
-L.control
-  .locate({
-    position: 'bottomleft',
-    initialZoomLevel: 15,
-    icon: 'fa fa-map-marker-alt'
-  })
-  .addTo(map)
-
-const elevationDataLayer = L.nonTiledLayer.wcs(
-  'https://openwms.statkart.no/skwms1/wcs.dtm?',
-  {
-    wcsOptions: {
-      coverage: 'land_utm33_10m',
-      colorScale: false
-    }
-  }
-)
 
 var elevationOptions = {
   theme: 'lime-theme',
@@ -318,42 +287,44 @@ map.on('click', () => {
   })
 })
 
-map.on('pm:create', e => {
-  routeLayers.addLayer(e.layer)
-  let geoJSON = e.layer.toGeoJSON()
-  geoJSON = addPointsToLineString(geoJSON, 0.2)
-  e.layer.distance = turf.length(geoJSON).toFixed(1)
+function addRouteHandler (routeLayer) {
+  routeLayers.addLayer(routeLayer)
+  let geojson = routeLayer.toGeoJSON()
+  geojson = addPointsToLineString(geojson, 0.2)
+  routeLayer.distance = turf.length(geojson).toFixed(1)
 
-  const elevationData = new AddElevationToGeoJSON(geoJSON)
-  elevationData.geoJSONWithElevation().then(geoJSONWithElevation => {
-    // TO DO refactor this to a function
-    e.layer.controlElevationProfile = L.control.elevation(elevationOptions)
-    e.layer.controlElevationProfile.addTo(map).loadData(geoJSONWithElevation)
-    const { elevationGain, elevationLoss } = sumElevation(geoJSONWithElevation)
+  Elevation.addElevationToGeojson(geojson).then(geojsonWithElevation => {
+    routeLayer.controlElevationProfile = L.control.elevation(elevationOptions)
+    routeLayer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation)
+    const { elevationGain, elevationLoss } = sumElevation(geojsonWithElevation)
 
     const popupElement = document.createElement('p')
-    popupElement.innerHTML = `Distanse: ${e.layer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m. `
+    popupElement.innerHTML = `Distanse: ${routeLayer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m. `
 
     const removeLayerLink = document.createElement('a')
     removeLayerLink.innerText = 'Slett spor'
     removeLayerLink.href = '#'
     removeLayerLink.onclick = () => {
-      hideElevationProfile(e.layer)
-      e.layer.remove()
+      hideElevationProfile(routeLayer)
+      routeLayer.remove()
     }
     popupElement.append(removeLayerLink)
 
-    e.layer.bindPopup(popupElement).openPopup()
+    routeLayer.bindPopup(popupElement).openPopup()
     routeLayers.eachLayer(layer => {
       console.log(layer.toGeoJSON())
     })
   })
 
   map.off('mousemove')
-  map.fitBounds(e.layer.getBounds())
-  e.layer.on('click', e => {
+  map.fitBounds(routeLayer.getBounds())
+  routeLayer.on('click', e => {
     showElevationProfile(e.target)
   })
+}
+
+map.on('pm:create', e => {
+  addRouteHandler(e.layer)
 })
 
 function sumElevation (lineString) {
@@ -366,9 +337,10 @@ function sumElevation (lineString) {
   elevations.forEach(elevation => {
     const diff = elevation - prevElevation
 
-    if (diff > 0) {
+    // I -10!!!
+    if (diff > 7) {
       elevationGain += diff
-    } else {
+    } else if (diff < -7) {
       elevationLoss += diff
     }
 
@@ -390,7 +362,6 @@ function addPointsToLineString (lineString, distance) {
 function hideElevationProfile (layer) {
   layer.controlElevationProfile._container.style.display = 'none'
   layer.controlElevationProfile.layer.remove()
-  elevationDataLayer.remove()
 }
 
 function showElevationProfile (layer) {
@@ -402,56 +373,85 @@ function showElevationProfile (layer) {
   selectedRouteLayer = layer
 }
 
-class AddElevationToGeoJSON {
-  constructor (geoJSON) {
-    this.geoJSON = geoJSON
+// import * as turf from '@turf/turf'
+// import lineString from '@turf/helpers'
+
+// // Example
+// const fs = require('fs')
+// let geojson = JSON.parse(fs.readFileSync('geojson.json', 'utf8'))
+// Elevation.addElevationToGeojson(geojson).then(geojsonEle =>
+//   console.log(geojsonEle)
+// )
+
+class Elevation {
+  constructor (geojson) {
+    this.geojson = geojson
   }
 
-  async geoJSONWithElevation () {
-    const elevationData = await this.fetchElevationData()
-    const geoJSONWithElevation = this.addElevationtoGeoJSON(
-      this.geoJSON,
-      elevationData
-    )
-    return geoJSONWithElevation
+  static async addElevationToGeojson (geojson) {
+    const elevation = new Elevation(geojson)
+    await elevation.fetchElevationData()
+    return elevation.addElevationToCoords()
   }
 
   async fetchElevationData () {
-    // Return FeatureCollection with the elevation data
+    // Return array with the elevation data
+    this.url = this.generateWMSUrl(this.geojson)
 
-    const url = this.generateWMSUrl(this.geoJSON)
-    const response = await fetch(url)
-    const txt = await response.text()
-    const rows = txt.trim().split('\n')
+    const response = await fetch(this.url)
+    const arrayBuffer = await response.arrayBuffer()
+    this.tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer)
+    this.image = await this.tiff.getImage()
 
-    let points = []
-    rows.forEach(string => {
-      let lonLatEle = string.split(' ')
-      lonLatEle = lonLatEle.map(string => parseFloat(string))
-      points.push(turf.point(lonLatEle))
-    })
+    this.geoTransform = this.generateGeotransform()
 
-    points = turf.featureCollection(points)
-    return points
+    const rasters = await this.image.readRasters()
+
+    this.dataArray = new Array(this.image.getHeight())
+    for (var j = 0; j < this.image.getHeight(); j++) {
+      this.dataArray[j] = new Array(this.image.getWidth())
+      for (var i = 0; i < this.image.getWidth(); i++) {
+        this.dataArray[j][i] = rasters[0][i + j * this.image.getWidth()]
+      }
+    }
+
+    return this.dataArray
   }
 
-  addElevationtoGeoJSON (geoJSON, points) {
-    turf.coordEach(geoJSON, coord => {
-      const elevation = this.elevationAt(coord[0], coord[1], points)
+  async addElevationToCoords () {
+    turf.coordEach(this.geojson, coord => {
+      const elevation = this.elevationAtCoord(coord[0], coord[1])
       coord[2] = elevation
     })
-    return geoJSON
+    return this.geojson
   }
 
-  elevationAt (lon, lat, points) {
-    const nearest = turf.nearestPoint(turf.point([lon, lat]), points)
-    const elevation = turf.getCoord(nearest)[2]
+  elevationAtCoord (lon, lat) {
+    const gt = this.geoTransform
+    let Xpixel = Math.round((lon - gt[0]) / gt[1])
+    let Ypixel = Math.round((lat - gt[3]) / gt[5])
+
+    // A small hack when its on max bounds
+    if (Xpixel === this.image.getWidth()) {
+      Xpixel--
+    }
+
+    if (Ypixel === this.image.getHeight()) {
+      Ypixel--
+    }
+    const elevation = this.dataArray[Ypixel][Xpixel]
     return elevation
   }
 
-  generateWMSUrl (geoJSON) {
-    const bbox = turf.bbox(geoJSON)
+  generateWMSUrl () {
+    const bbox = turf.bbox(this.geojson)
     const bboxString = bbox.join(',')
-    return `https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=xyz&COLORSCALE=false&CRS=EPSG:4326&WIDTH=200&HEIGHT=200&BBOX=${bboxString}`
+    return `https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=GEOTIFF&COLORSCALE=false&CRS=EPSG:4326&WIDTH=200&HEIGHT=200&BBOX=${bboxString}`
+  }
+
+  generateGeotransform () {
+    const tiepoint = this.image.getTiePoints()[0]
+    const pixelScale = this.image.getFileDirectory().ModelPixelScale
+    return [tiepoint.x, pixelScale[0], 0, tiepoint.y, 0, -1 * pixelScale[1]]
   }
 }
