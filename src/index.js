@@ -446,7 +446,7 @@ class Elevation {
   generateWMSUrl () {
     const bbox = turf.bbox(this.geojson)
     const bboxString = bbox.join(',')
-    return `https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=GEOTIFF&COLORSCALE=false&CRS=EPSG:4326&WIDTH=7000&HEIGHT=7000&BBOX=${bboxString}`
+    return `https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=GEOTIFF&COLORSCALE=false&CRS=EPSG:4326&WIDTH=700&HEIGHT=700&BBOX=${bboxString}`
   }
 
   generateGeotransform () {
