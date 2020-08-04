@@ -22,3 +22,10 @@ body,
   max-height: 65%;
   margin: 5px;
 }
+.leaflet-control .fa {
+  line-height: 30px;
+}
+
+a.leaflet-control-filelayer {
+  font-size: 20px !important;
+}

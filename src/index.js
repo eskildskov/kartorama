@@ -290,7 +290,7 @@ map.on('click', () => {
 function addRouteHandler (routeLayer) {
   routeLayers.addLayer(routeLayer)
   let geojson = routeLayer.toGeoJSON()
-  geojson = addPointsToLineString(geojson, 0.2)
+  geojson = addPointsToLineString(geojson, 0.05)
   routeLayer.distance = turf.length(geojson).toFixed(1)
 
   Elevation.addElevationToGeojson(geojson).then(geojsonWithElevation => {
@@ -337,14 +337,13 @@ function sumElevation (lineString) {
   elevations.forEach(elevation => {
     const diff = elevation - prevElevation
 
-    // I -10!!!
-    if (diff > 7) {
+    if (diff > 10) {
       elevationGain += diff
-    } else if (diff < -7) {
+      prevElevation = elevation
+    } else if (diff < -10) {
       elevationLoss += diff
+      prevElevation = elevation
     }
-
-    prevElevation = elevation
   })
 
   return {
@@ -443,10 +442,11 @@ class Elevation {
     return elevation
   }
 
+  // Height and wieght-params should maybe be dynamic
   generateWMSUrl () {
     const bbox = turf.bbox(this.geojson)
     const bboxString = bbox.join(',')
-    return `https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=GEOTIFF&COLORSCALE=false&CRS=EPSG:4326&WIDTH=200&HEIGHT=200&BBOX=${bboxString}`
+    return `https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=GEOTIFF&COLORSCALE=false&CRS=EPSG:4326&WIDTH=7000&HEIGHT=7000&BBOX=${bboxString}`
   }
 
   generateGeotransform () {
