@@ -18,6 +18,7 @@ const map = L.map('map', { zoomControl: false })
 const attributionKartverket =
   '<a href="http://www.kartverket.no/">Kartverket</a>'
 const attributionNVE = '<a href="https://www.nve.no/">NVE</a>'
+
 // hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
 FileLayer(null, L, togeojson)
 
@@ -169,7 +170,7 @@ L.control
   })
   .addTo(map)
 
-L.Control.FileLayerLoad.LABEL = ''
+L.Control.FileLayerLoad.LABEL = "<span class='fa fa-file-upload'></span>"
 
 const fileLayer = L.Control.fileLayerLoad({
   layer: L.geoJson,
