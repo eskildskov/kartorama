@@ -5,11 +5,13 @@ import './vendor/leaflet-slider/leaflet-slider'
 import 'leaflet-groupedlayercontrol'
 import * as FileLayer from 'leaflet-filelayer'
 import 'leaflet.locatecontrol'
-import * as turf from '@turf/turf' // needs slimming
+import * as turf from '@turf/turf'
 import './styles/index.scss'
 import togeojson from './vendor/togeojson'
 import '@raruto/leaflet-elevation'
-import * as GeoTIFF from 'geotiff/dist-browser/geotiff'
+import * as GeoTIFF from 'geotiff/dist-browser/geotiff' // needs slimming
+
+const fetch = require('node-fetch')
 
 // import AddElevationToGeoJSON from './add-elevation'
 
@@ -289,12 +291,13 @@ map.on('click', () => {
 })
 
 function addRouteHandler (routeLayer) {
-  routeLayers.addLayer(routeLayer)
-  let geojson = routeLayer.toGeoJSON()
-  geojson = addPointsToLineString(geojson, 0.05)
-  routeLayer.distance = turf.length(geojson).toFixed(1)
+  const geojson = routeLayer.toGeoJSON()
 
   Elevation.addElevationToGeojson(geojson).then(geojsonWithElevation => {
+    routeLayer = L.geoJSON(geojsonWithElevation)
+  routeLayers.addLayer(routeLayer)
+  routeLayer.distance = turf.length(geojson).toFixed(1)
+
     routeLayer.controlElevationProfile = L.control.elevation(elevationOptions)
     routeLayer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation)
     const { elevationGain, elevationLoss } = sumElevation(geojsonWithElevation)
@@ -325,6 +328,9 @@ function addRouteHandler (routeLayer) {
 }
 
 map.on('pm:create', e => {
+  const geojson = e.layer.toGeoJSON()
+  e.layer = L.geoJSON(addPointsToLineString(geojson, 0.05))
+
   addRouteHandler(e.layer)
 })
 
@@ -355,8 +361,7 @@ function sumElevation (lineString) {
 
 function addPointsToLineString (lineString, distance) {
   const chunkedLineString = turf.lineChunk(lineString, distance)
-  const messyLineString = turf.lineString(turf.coordAll(chunkedLineString))
-  return messyLineString
+  return turf.lineString(turf.coordAll(chunkedLineString))
 }
 
 function hideElevationProfile (layer) {
@@ -372,16 +377,6 @@ function showElevationProfile (layer) {
   layer.controlElevationProfile.layer.addTo(map)
   selectedRouteLayer = layer
 }
-
-// import * as turf from '@turf/turf'
-// import lineString from '@turf/helpers'
-
-// // Example
-// const fs = require('fs')
-// let geojson = JSON.parse(fs.readFileSync('geojson.json', 'utf8'))
-// Elevation.addElevationToGeojson(geojson).then(geojsonEle =>
-//   console.log(geojsonEle)
-// )
 
 class Elevation {
   constructor (geojson) {
@@ -443,7 +438,7 @@ class Elevation {
     return elevation
   }
 
-  // Height and wieght-params should maybe be dynamic
+  // Height and weight-params should maybe be dynamic??
   generateWMSUrl () {
     const bbox = turf.bbox(this.geojson)
     const bboxString = bbox.join(',')

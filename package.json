@@ -55,6 +55,7 @@
     "@mapbox/togeojson": "^0.16.0",
     "@raruto/leaflet-elevation": "^1.0.8",
     "@tmcw/togeojson": "^3.2.0",
+    "@turf/helpers": "^6.1.4",
     "@turf/turf": "^5.1.6",
     "d3": "^5.15.1",
     "esri-leaflet": "^2.3.3",
