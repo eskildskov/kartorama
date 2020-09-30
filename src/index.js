@@ -115,6 +115,19 @@ const zoom = localStorage.getItem('currentZoom')
 
 map.setView(center, zoom)
 
+// fetch('https://kartorama-e249.restdb.io/rest/geojson?q={"id":6}', {
+//   headers: {
+//     'x-apikey': '5f3563a1d3242231116ef8b0'
+//   }
+// })
+//   .then(response => response.json())
+//   .then(data => {
+//     L.geoJSON(data[0].geojson).addTo(map)
+//   })
+//   .catch(error => {
+//     console.error('Error:', error)
+//   })
+
 // DRAWING OPTIONS
 map.pm.setGlobalOptions({
   tooltips: false,
@@ -188,6 +201,44 @@ L.control
     icon: 'fa fa-map-marker-alt'
   })
   .addTo(map)
+
+//
+// SAVE
+//
+
+L.Control.Save = L.Control.extend({
+  onAdd: function (map) {
+    var container = L.DomUtil.create(
+      'div',
+      'leaflet-control-save leaflet-bar leaflet-control'
+    )
+    this._container = container
+    this._map = map
+
+    var linkAndIcon = this.options.createButtonCallback(container, this.options)
+    this._link = linkAndIcon.link
+    this._icon = linkAndIcon.icon
+
+    L.DomEvent.on(this._link, 'click', L.DomEvent.stopPropagation)
+      .on(this._link, 'click', L.DomEvent.preventDefault)
+      .on(this._link, 'click', this._onClick, this)
+      .on(this._link, 'dblclick', L.DomEvent.stopPropagation)
+
+    this._map.on('unload', this._unload, this)
+
+    return container
+  },
+
+  onRemove: function (map) {
+    // Nothing to do here
+  }
+})
+
+L.control.save = function (opts) {
+  return new L.Control.Save(opts)
+}
+
+L.control.save({ position: 'topleft' }).addTo(map)
 
 // DRAWING
 // TO DO combine!
@@ -295,8 +346,8 @@ function addRouteHandler (routeLayer) {
 
   Elevation.addElevationToGeojson(geojson).then(geojsonWithElevation => {
     routeLayer = L.geoJSON(geojsonWithElevation)
-  routeLayers.addLayer(routeLayer)
-  routeLayer.distance = turf.length(geojson).toFixed(1)
+    routeLayers.addLayer(routeLayer)
+    routeLayer.distance = turf.length(geojson).toFixed(1)
 
     routeLayer.controlElevationProfile = L.control.elevation(elevationOptions)
     routeLayer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation)
@@ -313,12 +364,34 @@ function addRouteHandler (routeLayer) {
       routeLayer.remove()
     }
     popupElement.append(removeLayerLink)
-
     routeLayer.bindPopup(popupElement).openPopup()
-    routeLayers.eachLayer(layer => {
-      console.log(layer.toGeoJSON())
-    })
+
+    // const allGeojson = getAllGeojson()
+    // const payload = JSON.stringify({ geojson: allGeojson })
+    // console.log(allGeojson)
+    //   fetch('https://kartorama-e249.restdb.io/rest/geojson', {
+    //     method: 'POST',
+    //     cache: 'no-cache',
+    //     mode: 'cors',
+    //     headers: {
+    //       'x-apikey': '5f3563a1d3242231116ef8b0',
+    //       'Content-Type': 'application/json'
+    //     },
+    //     body: payload
+    //   }).then(data => {
+    //     console.log(data) // JSON data parsed by `data.json()` call
+    //   })
   })
+
+  function getAllGeojson () {
+    // Returns a feature collection with all the routes in the map
+    let geojsons = []
+    routeLayers.eachLayer(routeLayer => {
+      const geojson = routeLayer.toGeoJSON()
+      geojsons = [...geojsons, ...geojson.features]
+    })
+    return geojsons
+  }
 
   map.off('mousemove')
   map.fitBounds(routeLayer.getBounds())
