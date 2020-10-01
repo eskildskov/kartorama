@@ -92,7 +92,6 @@ if (activeBaseLayerName) {
 const activeOverlayName = localStorage.getItem('activeOverlayName')
   ? localStorage.getItem('activeOverlayName')
   : 'Helning'
-localStorage.removeItem('activeOverlayName')
 map.addLayer(overlayMaps[activeOverlayName])
 activeOverlay = overlayMaps[activeOverlayName]
 
@@ -215,7 +214,7 @@ map.on('pm:drawstart', ({ workingLayer }) => {
 //
 
 opacitySlider.slider.addEventListener('click', function () {
-  localStorage.setItem('currentOpacity', opacitySlider.slider.value)
+  localStorage.setItem('currentOpacity', opacitySlider.slider.valueAsNumber)
 })
 
 function savePosition (e) {
@@ -236,12 +235,13 @@ function saveActiveOverlay (e) {
 
 map.on('baselayerchange', saveActiveBaseLayer)
 map.on('overlayadd', saveActiveOverlay)
+map.on('overlayadd', changeOverlayControl)
 map.on('moveend', savePosition)
 map.on('zoomend', saveZoom)
 
 function changeOverlayControl (e) {
   activeOverlay = e.layer
-  if (opacitySlider.slider.value === 0) {
+  if (opacitySlider.slider.valueAsNumber === 0) {
     const val = 0.2
     activeOverlay.setOpacity(val)
     opacitySlider.slider.value = val
@@ -249,8 +249,6 @@ function changeOverlayControl (e) {
     activeOverlay.setOpacity(opacitySlider.slider.value)
   }
 }
-
-map.on('overlayadd', changeOverlayControl)
 
 // FILE LOADER
 
