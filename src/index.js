@@ -263,7 +263,11 @@ fileLayer.loader.on('data:error', function (error) {
 })
 
 fileLayer.loader.on('data:loaded', function (e) {
-  addRouteHandler(e.layer)
+  addElevationToLayer(e.layer).then(layerWithElevation => {
+    map.removeLayer(e.layer)
+    map.addLayer(layerWithElevation)
+    addTooltipToRoute(layerWithElevation)
+  })
 })
 
 var elevationOptions = {
@@ -290,35 +294,34 @@ map.on('click', () => {
   })
 })
 
-function addRouteHandler (routeLayer) {
+// return new layer with elevation
+async function addElevationToLayer (routeLayer) {
   const geojson = routeLayer.toGeoJSON()
+  const geojsonWithElevation = await Elevation.addElevationToGeojson(geojson)
+  return L.geoJSON(geojsonWithElevation)
+}
 
-  Elevation.addElevationToGeojson(geojson).then(geojsonWithElevation => {
-    routeLayer = L.geoJSON(geojsonWithElevation)
+function addTooltipToRoute (routeLayer) {
+  const geojsonWithElevation = routeLayer.toGeoJSON()
+  routeLayer.distance = turf.length(geojsonWithElevation).toFixed(1)
+  routeLayer.controlElevationProfile = L.control.elevation(elevationOptions)
+  routeLayer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation)
+  const { elevationGain, elevationLoss } = sumElevation(geojsonWithElevation)
+
+  const popupElement = document.createElement('p')
+  popupElement.innerHTML = `Distanse: ${routeLayer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m. `
+
+  const removeLayerLink = document.createElement('a')
+  removeLayerLink.innerText = 'Slett spor'
+  removeLayerLink.href = '#'
+  removeLayerLink.onclick = () => {
+    hideElevationProfile(routeLayer)
+    routeLayer.remove()
+  }
+  popupElement.append(removeLayerLink)
+
+  routeLayer.bindPopup(popupElement).openPopup()
   routeLayers.addLayer(routeLayer)
-  routeLayer.distance = turf.length(geojson).toFixed(1)
-
-    routeLayer.controlElevationProfile = L.control.elevation(elevationOptions)
-    routeLayer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation)
-    const { elevationGain, elevationLoss } = sumElevation(geojsonWithElevation)
-
-    const popupElement = document.createElement('p')
-    popupElement.innerHTML = `Distanse: ${routeLayer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m. `
-
-    const removeLayerLink = document.createElement('a')
-    removeLayerLink.innerText = 'Slett spor'
-    removeLayerLink.href = '#'
-    removeLayerLink.onclick = () => {
-      hideElevationProfile(routeLayer)
-      routeLayer.remove()
-    }
-    popupElement.append(removeLayerLink)
-
-    routeLayer.bindPopup(popupElement).openPopup()
-    routeLayers.eachLayer(layer => {
-      console.log(layer.toGeoJSON())
-    })
-  })
 
   map.off('mousemove')
   map.fitBounds(routeLayer.getBounds())
@@ -327,11 +330,16 @@ function addRouteHandler (routeLayer) {
   })
 }
 
+// When finished drawing
 map.on('pm:create', e => {
   const geojson = e.layer.toGeoJSON()
-  e.layer = L.geoJSON(addPointsToLineString(geojson, 0.05))
+  const newLayer = L.geoJSON(addPointsToLineString(geojson, 0.05))
 
-  addRouteHandler(e.layer)
+  addElevationToLayer(newLayer).then(layerWithElevation => {
+    map.removeLayer(e.layer)
+    map.addLayer(layerWithElevation)
+    addTooltipToRoute(layerWithElevation)
+  })
 })
 
 function sumElevation (lineString) {
