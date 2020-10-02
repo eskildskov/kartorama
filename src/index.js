@@ -15,6 +15,8 @@ const localStorage = window.localStorage
 const map = L.map('map', { zoomControl: false })
 const attributionKartverket =
   '<a href="http://www.kartverket.no/">Kartverket</a>'
+const subdomainsKartverket = ['opencache', 'opencache2', 'opencache3']
+
 const attributionNVE = '<a href="https://www.nve.no/">NVE</a>'
 
 // hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
@@ -28,16 +30,18 @@ let activeOverlay
 let selectedRouteLayer
 
 const rasterBaseMap = L.tileLayer(
-  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster4&zoom={z}&x={x}&y={y}',
+  'https://{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster4&zoom={z}&x={x}&y={y}',
   {
-    attribution: attributionKartverket
+    attribution: attributionKartverket,
+    subdomains: subdomainsKartverket
   }
 )
 
 const vectorBaseMap = L.tileLayer(
-  'https://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
+  'https://{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
   {
-    attribution: attributionKartverket
+    attribution: attributionKartverket,
+    subdomains: subdomainsKartverket
   }
 )
 
