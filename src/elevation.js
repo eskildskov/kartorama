@@ -1,6 +1,6 @@
 import * as turf from '@turf/turf'
 import fetch from 'node-fetch'
-import * as GeoTIFF from 'geotiff'
+import * as GeoTIFF from 'geotiff/dist-browser/geotiff' // FIX https://github.com/geotiffjs/geotiff.js/issues/98
 
 export default class Elevation {
   constructor (geojson) {
