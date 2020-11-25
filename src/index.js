@@ -288,9 +288,11 @@ var elevationOptions = {
 
 const routeLayers = L.featureGroup()
 map.on('click', () => {
-  routeLayers.eachLayer(function (layer) {
-    hideElevationProfile(layer)
-  })
+  if (selectedRouteLayer) {
+    routeLayers.eachLayer(function (layer) {
+      hideElevationProfile(layer)
+    })
+  }
 })
 
 // return new layer with elevation
@@ -303,8 +305,16 @@ async function addElevationToLayer (routeLayer) {
 function addTooltipToRoute (routeLayer) {
   const geojsonWithElevation = routeLayer.toGeoJSON()
   routeLayer.distance = turf.length(geojsonWithElevation).toFixed(1)
+
   routeLayer.controlElevationProfile = L.control.elevation(elevationOptions)
   routeLayer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation)
+
+  console.log(Object.keys(routeLayer.controlElevationProfile._layers)[0])
+  // routeLayer.controlElevationProfile.pathLayer =
+  //   routeLayer.controlElevationProfile._layer[pathLayerKey]
+
+  selectedRouteLayer = routeLayer
+
   const { elevationGain, elevationLoss } = sumElevation(geojsonWithElevation)
 
   const popupElement = document.createElement('p')
@@ -373,7 +383,9 @@ function addPointsToLineString (lineString, distance) {
 
 function hideElevationProfile (layer) {
   layer.controlElevationProfile._container.style.display = 'none'
-  layer.controlElevationProfile.layer.remove()
+  const layers = layer.controlElevationProfile._layers._layers
+  layers[Object.keys(layers)[0]].remove()
+  selectedRouteLayer = null
 }
 
 function showElevationProfile (layer) {
@@ -381,6 +393,7 @@ function showElevationProfile (layer) {
     hideElevationProfile(selectedRouteLayer)
   }
   layer.controlElevationProfile._container.style.display = 'block'
-  layer.controlElevationProfile.layer.addTo(map)
+  const layers = layer.controlElevationProfile._layers._layers
+  layers[Object.keys(layers)[0]].addTo(map)
   selectedRouteLayer = layer
 }
