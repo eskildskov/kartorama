@@ -56,12 +56,13 @@ const kastOverlayMap = dynamicMapLayer(
   }
 )
 
-const steepnessOverlayMap = L.tileLayer.wms(
-  'https://gis3.nve.no/map/services/Bratthet/MapServer/WmsServer?',
+const steepnessOverlayMap = dynamicMapLayer(
   {
-    layers: 'Bratthet_snoskred',
-    format: 'image/png',
-    transparent: 'true',
+    url:
+      'http://gis2.ngi.no/arcgistemp/rest/services/Skred/BratteOmrApp/MapServer',
+    layers: [4, 5, 6, 7]
+  },
+  {
     attribution: attributionNVE
   }
 )
