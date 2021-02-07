@@ -331,6 +331,7 @@ function addTooltipToRoute (routeLayer) {
 // When finished drawing
 map.on('pm:create', e => {
   const geojson = e.layer.toGeoJSON()
+  console.log(JSON.stringify(geojson))
   const newLayer = L.geoJSON(addPointsToLineString(geojson, 0.05))
 
   addElevationToLayer(newLayer).then(layerWithElevation => {
