@@ -10,6 +10,7 @@ import './styles/index.scss'
 import togeojson from './vendor/togeojson'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
+import Routes from './routes/routes'
 
 const localStorage = window.localStorage
 const map = L.map('map', { zoomControl: false })
@@ -384,3 +385,6 @@ function showElevationProfile (layer) {
   layer.controlElevationProfile.layer.addTo(map)
   selectedRouteLayer = layer
 }
+
+const routes = new Routes(map)
+routes.addRoutesToMap()
