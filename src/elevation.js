@@ -1,14 +1,63 @@
 import * as turf from '@turf/turf'
 import fetch from 'node-fetch'
 import * as GeoTIFF from 'geotiff/dist-browser/geotiff' // FIX https://github.com/geotiffjs/geotiff.js/issues/98
+<<<<<<< .merge_file_i61CLb
 
 export default class Elevation {
+=======
+import L from 'leaflet'
+
+export default class Elevation {
+  static async addElevationToLayer (routeLayer) {
+    // return new layer with elevation
+    const geojson = routeLayer.toGeoJSON()
+    const geojsonWithElevation = await ElevationToGeoJson.addElevationToGeojson(geojson)
+    return L.geoJSON(geojsonWithElevation)
+  }
+
+  static sumElevation (lineString) {
+    let elevationGain = 0
+    let elevationLoss = 0
+
+    const elevations = turf.coordAll(lineString).map(coord => coord[2])
+    let prevElevation = elevations.shift()
+
+    elevations.forEach(elevation => {
+      const diff = elevation - prevElevation
+
+      if (diff > 10) {
+        elevationGain += diff
+        prevElevation = elevation
+      } else if (diff < -10) {
+        elevationLoss += diff
+        prevElevation = elevation
+      }
+    })
+
+    return {
+      elevationGain: Math.round(elevationGain),
+      elevationLoss: Math.round(-elevationLoss)
+    }
+  }
+
+  static addPointsToLineString (lineString, distance) {
+    const chunkedLineString = turf.lineChunk(lineString, distance)
+    return turf.lineString(turf.coordAll(chunkedLineString))
+  }
+}
+
+class ElevationToGeoJson {
+>>>>>>> .merge_file_BFnPUD
   constructor (geojson) {
     this.geojson = geojson
   }
 
   static async addElevationToGeojson (geojson) {
+<<<<<<< .merge_file_i61CLb
     const elevation = new Elevation(geojson)
+=======
+    const elevation = new ElevationToGeoJson(geojson)
+>>>>>>> .merge_file_BFnPUD
     await elevation.fetchElevationData()
     return elevation.addElevationToCoords()
   }
