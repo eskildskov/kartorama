@@ -1,10 +1,6 @@
 import * as turf from '@turf/turf'
 import fetch from 'node-fetch'
 import * as GeoTIFF from 'geotiff/dist-browser/geotiff' // FIX https://github.com/geotiffjs/geotiff.js/issues/98
-<<<<<<< .merge_file_i61CLb
-
-export default class Elevation {
-=======
 import L from 'leaflet'
 
 export default class Elevation {
@@ -47,17 +43,12 @@ export default class Elevation {
 }
 
 class ElevationToGeoJson {
->>>>>>> .merge_file_BFnPUD
   constructor (geojson) {
     this.geojson = geojson
   }
 
   static async addElevationToGeojson (geojson) {
-<<<<<<< .merge_file_i61CLb
-    const elevation = new Elevation(geojson)
-=======
     const elevation = new ElevationToGeoJson(geojson)
->>>>>>> .merge_file_BFnPUD
     await elevation.fetchElevationData()
     return elevation.addElevationToCoords()
   }

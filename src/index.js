@@ -9,15 +9,13 @@ import './styles/index.scss'
 import togeojson from './vendor/togeojson'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
-<<<<<<< HEAD
 import Routes from './routes/routes'
-=======
+
 import {
   baseMaps,
   overlayMaps,
   groupedOverlays
 } from './layers'
->>>>>>> master
 
 const localStorage = window.localStorage
 const map = L.map('map', { zoomControl: false })
