@@ -1,5 +1,4 @@
 import L from 'leaflet'
-import { dynamicMapLayer } from 'esri-leaflet'
 import '@geoman-io/leaflet-geoman-free'
 import './vendor/leaflet-slider/leaflet-slider'
 import 'leaflet-groupedlayercontrol'
@@ -10,78 +9,17 @@ import './styles/index.scss'
 import togeojson from './vendor/togeojson'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
+import {
+  baseMaps,
+  overlayMaps,
+  groupedOverlays
+} from './layers'
 
 const localStorage = window.localStorage
 const map = L.map('map', { zoomControl: false })
-const attributionKartverket =
-  '<a href="http://www.kartverket.no/">Kartverket</a>'
-const subdomainsKartverket = ['opencache', 'opencache2', 'opencache3']
-
-const attributionNVE = '<a href="https://www.nve.no/">NVE</a>'
-
-// hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
-FileLayer(null, L, togeojson)
-
-//
-// LAYERS
-//
 
 let activeOverlay
 let selectedRouteLayer
-
-const rasterBaseMap = L.tileLayer(
-  'https://{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster4&zoom={z}&x={x}&y={y}',
-  {
-    attribution: attributionKartverket,
-    subdomains: subdomainsKartverket
-  }
-)
-
-const vectorBaseMap = L.tileLayer(
-  'https://{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
-  {
-    attribution: attributionKartverket,
-    subdomains: subdomainsKartverket
-  }
-)
-
-const kastOverlayMap = dynamicMapLayer(
-  {
-    url:
-      'https://gis3.nve.no/map/rest/services/Mapservices/KlassifiseringSkredterreng/MapServer',
-    layers: [4, 5, 6, 7]
-  },
-  {
-    attribution: attributionNVE
-  }
-)
-
-const steepnessOverlayMap = L.tileLayer.wms(
-  'https://gis3.nve.no/map/services/Bratthet/MapServer/WmsServer?',
-  {
-    layers: 'Bratthet_snoskred',
-    format: 'image/png',
-    transparent: 'true',
-    attribution: attributionNVE
-  }
-)
-
-const baseMaps = {
-  Vektorkart: vectorBaseMap,
-  Rasterkart: rasterBaseMap
-}
-
-const overlayMaps = {
-  Helning: steepnessOverlayMap,
-  AutoKAST: kastOverlayMap
-}
-
-const groupedOverlays = {
-  Tillegg: {
-    Helning: steepnessOverlayMap,
-    AutoKAST: kastOverlayMap
-  }
-}
 
 //
 // INIT MAP AND LAYERS WITH SAVED STATE
@@ -123,14 +61,12 @@ map.pm.setGlobalOptions({
 })
 
 // SET CONTROLS IN RIGHT ORDER
-L.control.scale({ imperial: false, maxWidth: 200 }).addTo(map)
-L.control
-  .zoom({
-    position: 'bottomleft'
-  })
-  .addTo(map)
+const scaleControl = L.control.scale({ imperial: false, maxWidth: 200 })
+const zoomControl = L.control.zoom({
+  position: 'bottomleft'
+})
 
-map.pm.addControls({
+const drawingOpts = {
   position: 'bottomleft',
   drawCircle: false,
   drawMarker: false,
@@ -142,7 +78,7 @@ map.pm.addControls({
   removalMode: false,
   editMode: false,
   drawPolyline: true
-})
+}
 
 const opacitySlider = L.control
   .slider(
@@ -161,32 +97,37 @@ const opacitySlider = L.control
       value: activeOverlay.options.opacity
     }
   )
-  .addTo(map)
+const layerControl = L.control.groupedLayers(baseMaps, groupedOverlays, {
+  exclusiveGroups: ['Tillegg'],
+  position: 'bottomright',
+  collapsed: true
+})
 
-L.control
-  .groupedLayers(baseMaps, groupedOverlays, {
-    exclusiveGroups: ['Tillegg'],
-    position: 'bottomright',
-    collapsed: true
-  })
-  .addTo(map)
-
+// hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
+FileLayer(null, L, togeojson)
 L.Control.FileLayerLoad.LABEL = "<span class='fa fa-file-upload'></span>"
 
-const fileLayer = L.Control.fileLayerLoad({
+const fileControl = L.Control.fileLayerLoad({
   layer: L.geoJson,
   layerOptions: { style: { color: 'red' } },
   position: 'topleft',
   fileSizeLimit: 4000
-}).addTo(map)
+})
 
-L.control
+const locateControl = L.control
   .locate({
     position: 'bottomleft',
     initialZoomLevel: 15,
     icon: 'fa fa-map-marker-alt'
   })
-  .addTo(map)
+
+scaleControl.addTo(map)
+zoomControl.addTo(map)
+opacitySlider.addTo(map)
+layerControl.addTo(map)
+fileControl.addTo(map)
+locateControl.addTo(map)
+map.pm.addControls(drawingOpts)
 
 // DRAWING
 // TO DO combine!
@@ -256,12 +197,12 @@ function changeOverlayControl (e) {
 
 // FILE LOADER
 
-fileLayer.loader.on('data:error', function (error) {
+fileControl.loader.on('data:error', function (error) {
   console.error(error)
 })
 
-fileLayer.loader.on('data:loaded', function (e) {
-  addElevationToLayer(e.layer).then(layerWithElevation => {
+fileControl.loader.on('data:loaded', function (e) {
+  Elevation.addElevationToLayer(e.layer).then(layerWithElevation => {
     map.removeLayer(e.layer)
     map.addLayer(layerWithElevation)
     addTooltipToRoute(layerWithElevation)
@@ -292,19 +233,12 @@ map.on('click', () => {
   })
 })
 
-// return new layer with elevation
-async function addElevationToLayer (routeLayer) {
-  const geojson = routeLayer.toGeoJSON()
-  const geojsonWithElevation = await Elevation.addElevationToGeojson(geojson)
-  return L.geoJSON(geojsonWithElevation)
-}
-
 function addTooltipToRoute (routeLayer) {
   const geojsonWithElevation = routeLayer.toGeoJSON()
   routeLayer.distance = turf.length(geojsonWithElevation).toFixed(1)
   routeLayer.controlElevationProfile = L.control.elevation(elevationOptions)
   routeLayer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation)
-  const { elevationGain, elevationLoss } = sumElevation(geojsonWithElevation)
+  const { elevationGain, elevationLoss } = Elevation.sumElevation(geojsonWithElevation)
 
   const popupElement = document.createElement('p')
   popupElement.innerHTML = `Distanse: ${routeLayer.distance} km. Opp: ${elevationGain} m. Ned: ${elevationLoss} m. `
@@ -332,44 +266,14 @@ function addTooltipToRoute (routeLayer) {
 map.on('pm:create', e => {
   const geojson = e.layer.toGeoJSON()
   console.log(JSON.stringify(geojson))
-  const newLayer = L.geoJSON(addPointsToLineString(geojson, 0.05))
+  const newLayer = L.geoJSON(Elevation.addPointsToLineString(geojson, 0.05))
 
-  addElevationToLayer(newLayer).then(layerWithElevation => {
+  Elevation.addElevationToLayer(newLayer).then(layerWithElevation => {
     map.removeLayer(e.layer)
     map.addLayer(layerWithElevation)
     addTooltipToRoute(layerWithElevation)
   })
 })
-
-function sumElevation (lineString) {
-  let elevationGain = 0
-  let elevationLoss = 0
-
-  const elevations = turf.coordAll(lineString).map(coord => coord[2])
-  let prevElevation = elevations.shift()
-
-  elevations.forEach(elevation => {
-    const diff = elevation - prevElevation
-
-    if (diff > 10) {
-      elevationGain += diff
-      prevElevation = elevation
-    } else if (diff < -10) {
-      elevationLoss += diff
-      prevElevation = elevation
-    }
-  })
-
-  return {
-    elevationGain: Math.round(elevationGain),
-    elevationLoss: Math.round(-elevationLoss)
-  }
-}
-
-function addPointsToLineString (lineString, distance) {
-  const chunkedLineString = turf.lineChunk(lineString, distance)
-  return turf.lineString(turf.coordAll(chunkedLineString))
-}
 
 function hideElevationProfile (layer) {
   layer.controlElevationProfile._container.style.display = 'none'
