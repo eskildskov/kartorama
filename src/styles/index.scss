@@ -4,6 +4,10 @@
 @import '~@fortawesome/fontawesome-free/css/all.css';
 @import '../vendor/leaflet-slider/leaflet-slider.css';
 @import '~@raruto/leaflet-elevation/src/leaflet-elevation.css';
+@import '../vendor/leaflet-sidebar/L.Control.Sidebar.css';
+@import '../vendor/leaflet-sidebar/L.Control.Sidebar.scss';
+@import '../routes/src/Routes.scss';
+
 
 body {
   padding: 0;

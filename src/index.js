@@ -1,21 +1,23 @@
 import L from 'leaflet'
 import '@geoman-io/leaflet-geoman-free'
 import './vendor/leaflet-slider/leaflet-slider'
-import 'leaflet-groupedlayercontrol'
-import * as FileLayer from 'leaflet-filelayer'
-import 'leaflet.locatecontrol'
+import { scaleControl, zoomControl, layerControl, fileControl, locateControl, drawingOpts } from './controls'
 import * as turf from '@turf/turf'
 import './styles/index.scss'
-import togeojson from './vendor/togeojson'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
-import Routes from './routes/routes'
+import './vendor/leaflet-sidebar/L.Control.Sidebar'
+import Vue from 'vue'
+import Buefy from 'buefy'
+import Routes from './routes/src/Routes.vue'
+import routesData from './routes/data/routes.json'
+import addRoutesToMap from './routes/src/routes2'
 
 import {
   baseMaps,
-  overlayMaps,
-  groupedOverlays
+  overlayMaps
 } from './layers'
+// import Routes from './routes/routes'
 
 const localStorage = window.localStorage
 const map = L.map('map', { zoomControl: false })
@@ -54,6 +56,23 @@ const zoom = localStorage.getItem('currentZoom')
 
 map.setView(center, zoom)
 
+const opacitySlider = L.control.slider(
+  function (value) {
+    activeOverlay.setOpacity(value)
+  },
+  {
+    min: 0,
+    max: 1.0,
+    step: 0.01,
+    position: 'bottomright',
+    collapsed: false,
+    syncSlider: true,
+    title: 'Gjennomsiktighet',
+    showValue: false,
+    value: activeOverlay.options.opacity
+  }
+)
+
 // DRAWING OPTIONS
 map.pm.setGlobalOptions({
   tooltips: false,
@@ -61,67 +80,6 @@ map.pm.setGlobalOptions({
   markerStyle: { draggable: false },
   finishOn: null
 })
-
-// SET CONTROLS IN RIGHT ORDER
-const scaleControl = L.control.scale({ imperial: false, maxWidth: 200 })
-const zoomControl = L.control.zoom({
-  position: 'bottomleft'
-})
-
-const drawingOpts = {
-  position: 'bottomleft',
-  drawCircle: false,
-  drawMarker: false,
-  drawCircleMarker: false,
-  drawRectangle: false,
-  drawPolygon: false,
-  dragMode: false,
-  cutPolygon: false,
-  removalMode: false,
-  editMode: false,
-  drawPolyline: true
-}
-
-const opacitySlider = L.control
-  .slider(
-    function (value) {
-      activeOverlay.setOpacity(value)
-    },
-    {
-      min: 0,
-      max: 1.0,
-      step: 0.01,
-      position: 'bottomright',
-      collapsed: false,
-      syncSlider: true,
-      title: 'Gjennomsiktighet',
-      showValue: false,
-      value: activeOverlay.options.opacity
-    }
-  )
-const layerControl = L.control.groupedLayers(baseMaps, groupedOverlays, {
-  exclusiveGroups: ['Tillegg'],
-  position: 'bottomright',
-  collapsed: true
-})
-
-// hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
-FileLayer(null, L, togeojson)
-L.Control.FileLayerLoad.LABEL = "<span class='fa fa-file-upload'></span>"
-
-const fileControl = L.Control.fileLayerLoad({
-  layer: L.geoJson,
-  layerOptions: { style: { color: 'red' } },
-  position: 'topleft',
-  fileSizeLimit: 4000
-})
-
-const locateControl = L.control
-  .locate({
-    position: 'bottomleft',
-    initialZoomLevel: 15,
-    icon: 'fa fa-map-marker-alt'
-  })
 
 scaleControl.addTo(map)
 zoomControl.addTo(map)
@@ -157,7 +115,7 @@ map.on('pm:drawstart', ({ workingLayer }) => {
 })
 
 //
-// SAVE STATE
+// STATE
 //
 
 opacitySlider.slider.addEventListener('click', function () {
@@ -291,5 +249,45 @@ function showElevationProfile (layer) {
   selectedRouteLayer = layer
 }
 
-const routes = new Routes(map)
-routes.addRoutesToMap()
+// const routes = new Routes(map)
+// routes.addRoutesToMap()
+
+// const Routes = L.Class.extend({
+//   // A property with initial value = 42
+//   myDemoProperty: 42,
+
+//   // A method
+//   myDemoMethod: function () {
+//     return this.myDemoProperty
+//   }
+// })
+
+// var myDemoInstance = new Routes()
+
+// // This will output "42" to the development console
+// console.log(myDemoInstance.myDemoMethod())
+
+const sidebar = L.control.sidebar('sidebar', {
+  position: 'right'
+})
+
+map.addControl(sidebar)
+sidebar.show()
+
+Vue.use(Buefy)
+
+const vm = new Vue({
+  el: '#sidebar-content',
+  template: '<Routes/>',
+  components: { Routes }
+})
+
+const style = {
+  color: 'red'
+}
+
+const routesWithGeoJSON = routesData.filter(route => route.geoJSON != '')
+let geoJSONLayers = routesWithGeoJSON.map(r => L.geoJSON(r.geoJSON, { style: style }))
+geoJSONLayers = L.layerGroup(geoJSONLayers)
+geoJSONLayers.addTo(map)
+
