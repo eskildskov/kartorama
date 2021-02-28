@@ -3,7 +3,6 @@ import '@geoman-io/leaflet-geoman-free'
 import './vendor/leaflet-slider/leaflet-slider'
 import { scaleControl, zoomControl, layerControl, fileControl, locateControl, drawingOpts } from './controls'
 import * as turf from '@turf/turf'
-import './styles/index.scss'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
 import './vendor/leaflet-sidebar/L.Control.Sidebar'
@@ -11,7 +10,6 @@ import Vue from 'vue'
 import Buefy from 'buefy'
 import Routes from './routes/src/Routes.vue'
 import routesData from './routes/data/routes.json'
-import addRoutesToMap from './routes/src/routes2'
 
 import {
   baseMaps,
@@ -249,30 +247,13 @@ function showElevationProfile (layer) {
   selectedRouteLayer = layer
 }
 
-// const routes = new Routes(map)
-// routes.addRoutesToMap()
-
-// const Routes = L.Class.extend({
-//   // A property with initial value = 42
-//   myDemoProperty: 42,
-
-//   // A method
-//   myDemoMethod: function () {
-//     return this.myDemoProperty
-//   }
-// })
-
-// var myDemoInstance = new Routes()
-
-// // This will output "42" to the development console
-// console.log(myDemoInstance.myDemoMethod())
-
 const sidebar = L.control.sidebar('sidebar', {
   position: 'right'
 })
 
 map.addControl(sidebar)
 sidebar.show()
+
 
 Vue.use(Buefy)
 
@@ -287,7 +268,20 @@ const style = {
 }
 
 const routesWithGeoJSON = routesData.filter(route => route.geoJSON != '')
-let geoJSONLayers = routesWithGeoJSON.map(r => L.geoJSON(r.geoJSON, { style: style }))
-geoJSONLayers = L.layerGroup(geoJSONLayers)
-geoJSONLayers.addTo(map)
+
+const routeArr = {}
+routesWithGeoJSON.forEach(r => {
+  const routeL = L.geoJSON(r.geoJSON, { style: style })
+  routeArr[r.route_id] = routeL
+})
+
+const geoJSONLayers = routesWithGeoJSON.map(r => L.geoJSON(r.geoJSON, { style: style }))
+const geoJSONLayerGroup = L.layerGroup(geoJSONLayers)
+geoJSONLayerGroup.addTo(map)
+
+vm.$on('selectedRoute', (routeId) => {
+  const selectedRouteLayer = routeArr[routeId]
+  map.fitBounds(selectedRouteLayer.getBounds())
+});
+
 

@@ -1,5 +1,5 @@
 <template>
-  <article class="media mt-2 pt-2"> 
+  <article @click="onClick" class="media mt-2 pt-2"> 
     <div class="media-content">
       <div class="content">
         <p>
@@ -22,6 +22,12 @@ export default {
       type: Object,
       required: true
     }
+  },
+  methods: {
+   onClick() {
+     this.$root.$emit('selectedRoute', this.route.route_id)
+   }
   }
+
 }
 </script>

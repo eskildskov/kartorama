@@ -20,7 +20,7 @@
       <div v-if="matchedRoutes.length">
         <RouteListItem
           v-for="route in matchedRoutes"
-          :key="route.id"
+          :key="route.route_id"
           :route="route"
         />
       </div>
@@ -46,6 +46,10 @@ export default {
       aspect: [],
       sortBy: 'mountain_name'
     }
+  },
+  methods: {
+    onClick () {
+      this.$root.$emit('selectedRoute', ); }
   },
   computed: {
     matchedRoutes: function () {
