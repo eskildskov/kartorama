@@ -4,8 +4,6 @@
   "description": "Kart",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=development webpack-dev-server --config config/webpack.dev.js",
-    "build": "cross-env NODE_ENV=production webpack --config config/webpack.prod.js",
     "postinstall": "patch-package"
   },
   "engines": {
@@ -15,39 +13,21 @@
   "author": "Eskild Skov Pedersen",
   "license": "",
   "devDependencies": {
-    "@babel/core": "^7.5.5",
-    "@babel/plugin-proposal-class-properties": "^7.5.5",
-    "@babel/plugin-transform-runtime": "^7.9.0",
-    "@babel/preset-env": "^7.5.5",
-    "babel-eslint": "^10.0.3",
-    "babel-loader": "^8.0.6",
-    "clean-webpack-plugin": "^3.0.0",
-    "copy-webpack-plugin": "^5.1.1",
     "cross-env": "^5.2.1",
-    "css-loader": "^3.2.0",
+    "css-loader": "^3.6.0",
     "cssnano": "^4.1.10",
     "eslint": "^6.2.2",
     "eslint-loader": "^3.0.0",
-    "file-loader": "^4.2.0",
-    "html-webpack-plugin": "^3.2.0",
-    "mini-css-extract-plugin": "^0.8.0",
+    "laravel-mix": "^6.0.13",
     "node-fetch": "^2.6.0",
     "node-sass": "^4.14",
-    "optimize-css-assets-webpack-plugin": "^5.0.3",
     "patch-package": "^6.2.2",
-    "postcss-loader": "^3.0.0",
-    "postcss-preset-env": "^6.7.0",
     "prettier": "^2.0.4",
-    "sass": "^1.26.3",
-    "sass-loader": "^8.0.0",
-    "standard": "^14.3.3",
-    "style-loader": "^1.0.0",
-    "terser-webpack-plugin": "^1.4.1",
-    "url-loader": "^2.1.0",
-    "webpack": "^4.39.3",
-    "webpack-cli": "^3.3.7",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.2.2"
+    "resolve-url-loader": "^3.1.2",
+    "sass": "^1.32.8",
+    "sass-loader": "^10.1.1",
+    "vue-loader": "^15.9.6",
+    "vue-template-compiler": "^2.6.12"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.13.0",
@@ -57,6 +37,7 @@
     "@tmcw/togeojson": "^3.2.0",
     "@turf/helpers": "^6.1.4",
     "@turf/turf": "^5.1.6",
+    "buefy": "^0.9.4",
     "d3": "^5.15.1",
     "esri-leaflet": "^2.3.3",
     "fs": "0.0.1-security",
@@ -67,6 +48,8 @@
     "leaflet-groupedlayercontrol": "^0.6.1",
     "leaflet.locatecontrol": "^0.71.1",
     "leaflet.nontiledlayer": "^1.0.8",
+    "postcss-preset-env": "^6.7.0",
+    "vue": "^2.6.12",
     "xmldom": "^0.3.0"
   }
 }
