@@ -4,7 +4,8 @@
   "description": "Kart",
   "main": "index.js",
   "scripts": {
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "build": "npx mix"
   },
   "engines": {
     "node": "14.x"

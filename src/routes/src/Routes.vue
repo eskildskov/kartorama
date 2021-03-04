@@ -1,22 +1,23 @@
 <template>
   <div class="mt-3">
-    <section style="width:85%">
-      <b-field horizontal label="Retning">
-        <b-checkbox v-model="aspect" native-value="N">Nord</b-checkbox>
-        <b-checkbox v-model="aspect" native-value="Ø">Øst</b-checkbox>
-        <b-checkbox v-model="aspect" native-value="S">Syd</b-checkbox>
-        <b-checkbox v-model="aspect" native-value="V">Vest</b-checkbox>
-      </b-field>
+      <section class="block">
+        <b-field horizontal label="Retning">
+          <b-checkbox v-model="aspect" native-value="N">Nord</b-checkbox>
+          <b-checkbox v-model="aspect" native-value="Ø">Øst</b-checkbox>
+          <b-checkbox v-model="aspect" native-value="S">Syd</b-checkbox>
+          <b-checkbox v-model="aspect" native-value="V">Vest</b-checkbox>
+        </b-field>
 
-      <b-field horizontal label="Sorter">
-        <b-select size="is-small" v-model="sortBy" placeholder="Sorter">
-          <option value="mountain_name">Fjell</option>
-          <option value="max_start_altitude">Starthøyde</option>
-          <option value="area">Område</option>
-        </b-select>
-      </b-field>
-    </section>
-    <section>
+        <b-field horizontal label="Sorter">
+          <b-select size="is-small" v-model="sortBy" placeholder="Sorter">
+            <option value="mountain_name">Fjell</option>
+            <option value="max_start_altitude">Starthøyde</option>
+            <option value="area">Område</option>
+          </b-select>
+        </b-field>
+      </section>
+
+    <section class="block">
       <div v-if="matchedRoutes.length">
         <RouteListItem
           v-for="route in matchedRoutes"
@@ -27,7 +28,8 @@
       <p v-else>
         Ingen treff
       </p>
-    </section>
+      </section>
+
   </div>
 </template>
 

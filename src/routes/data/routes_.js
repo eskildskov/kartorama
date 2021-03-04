@@ -1,4 +1,4 @@
-import routes from './routes.json'
+import routes from '../../routes_/routes.json'
 import L from 'leaflet'
 
 export default class Routes {

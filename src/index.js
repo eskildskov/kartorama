@@ -5,7 +5,7 @@ import { scaleControl, zoomControl, layerControl, fileControl, locateControl, dr
 import * as turf from '@turf/turf'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
-import './vendor/leaflet-sidebar/L.Control.Sidebar'
+// import './vendor/leaflet-sidebar/L.Control.Sidebar'
 import Vue from 'vue'
 import Buefy from 'buefy'
 import Routes from './routes/src/Routes.vue'
@@ -247,12 +247,12 @@ function showElevationProfile (layer) {
   selectedRouteLayer = layer
 }
 
-const sidebar = L.control.sidebar('sidebar', {
-  position: 'right'
-})
+// const sidebar = L.control.sidebar('sidebar', {
+//   position: 'right'
+// })
 
-map.addControl(sidebar)
-sidebar.show()
+// map.addControl(sidebar)
+// sidebar.show()
 
 
 Vue.use(Buefy)
@@ -264,7 +264,7 @@ const vm = new Vue({
 })
 
 const style = {
-  color: 'red'
+  color: 'red',
 }
 
 const routesWithGeoJSON = routesData.filter(route => route.geoJSON != '')
@@ -275,13 +275,15 @@ routesWithGeoJSON.forEach(r => {
   routeArr[r.route_id] = routeL
 })
 
-const geoJSONLayers = routesWithGeoJSON.map(r => L.geoJSON(r.geoJSON, { style: style }))
-const geoJSONLayerGroup = L.layerGroup(geoJSONLayers)
+const geoJSONLayerGroup = L.layerGroup(Object.values(routeArr))
 geoJSONLayerGroup.addTo(map)
+
 
 vm.$on('selectedRoute', (routeId) => {
   const selectedRouteLayer = routeArr[routeId]
+  selectedRouteLayer.setStyle({ color: 'yellow' })
   map.fitBounds(selectedRouteLayer.getBounds())
+  map.setZoom(13)
 });
 
 

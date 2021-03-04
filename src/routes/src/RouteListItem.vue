@@ -1,5 +1,5 @@
 <template>
-  <article @click="onClick" class="media mt-2 pt-2"> 
+  <article @click="onClick" class="media mt-0 pb-2 pt-2"> 
     <div class="media-content">
       <div class="content">
         <p>
@@ -8,8 +8,18 @@
           <i class="iconify ml-2" data-icon="mdi-car"></i> <small>{{ route.max_start_altitude }} moh</small>
           <i class="iconify ml-2" data-icon="mdi:compass-outline"></i> <small>{{ route.aspect.join(', ') }}</small>
           <i class="iconify ml-2" data-icon="bi:globe"></i> <small>{{ route.area }}</small>
+          <span v-if="isActive"><br/>
+            En fin liten tur for barn i alle aldre. 
+            <span v-if="route.start_zones">
+              <i class="iconify" data-icon="mdi:angle-acute"></i>
+              <span v-for="z in route.start_zones">
+                {{ z[0] }}: {{z[1]}}°.
+              </span>
 
+            </span>
+          </span>
         </p>
+
       </div>
     </div>
   </article>
@@ -23,11 +33,23 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      isActive: false
+    }
+  },
   methods: {
    onClick() {
+     this.isActive = true
      this.$root.$emit('selectedRoute', this.route.route_id)
    }
   }
 
 }
 </script>
+<style scoped>
+article:hover {
+  background: rgb(240, 240, 240);
+  cursor: pointer;
+}
+</style>
