@@ -26,8 +26,8 @@ export const vectorBaseMap = L.tileLayer(
 export const kastOverlayMap = dynamicMapLayer(
   {
     url:
-      'https://gis3.nve.no/map/rest/services/Mapservices/KlassifiseringSkredterreng/MapServer',
-    layers: [4, 5, 6, 7]
+      'https://gis2.nve.no/arcgis/rest/services/wmts/KastWMTS_19022021/MapServer',
+    layers: [0, 1, 2, 3]
   },
   {
     attribution: attributionNVE
