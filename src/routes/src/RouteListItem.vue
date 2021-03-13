@@ -9,10 +9,9 @@
           <i class="iconify ml-2" data-icon="mdi:compass-outline"></i> <small>{{ route.aspect.join(', ') }}</small>
           <i class="iconify ml-2" data-icon="bi:globe"></i> <small>{{ route.area }}</small>
           <span v-if="isActive"><br/>
-            En fin liten tur for barn i alle aldre. 
-            <span v-if="route.start_zones">
+            <span v-if="route.avalanche_start_zones.length">
               <i class="iconify" data-icon="mdi:angle-acute"></i>
-              <span v-for="z in route.start_zones">
+              <span v-for="z in route.avalanche_start_zones">
                 {{ z[0] }}: {{z[1]}}°.
               </span>
 
@@ -26,6 +25,8 @@
 </template>
 
 <script>
+import EventBus from './EventBus'
+
 export default {
   props: {
     route: {
@@ -40,10 +41,21 @@ export default {
   },
   methods: {
    onClick() {
-     this.isActive = true
-     this.$root.$emit('selectedRoute', this.route.route_id)
+     EventBus.$emit('route-selected', this.route.route_id);
    }
+  },
+  mounted() { 
+    EventBus.$on('route-selected', routeId => {
+      if (this.route.route_id == routeId) {
+        this.isActive = true
+        this.$el.scrollIntoView()
+      }
+      else {
+        this.isActive = false
+      }
+    })
   }
+
 
 }
 </script>

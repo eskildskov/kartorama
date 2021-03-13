@@ -10,6 +10,7 @@ import Vue from 'vue'
 import Buefy from 'buefy'
 import Routes from './routes/src/Routes.vue'
 import routesData from './routes/data/routes.json'
+import EventBus from './routes/src/EventBus'
 
 import {
   baseMaps,
@@ -272,18 +273,35 @@ const routesWithGeoJSON = routesData.filter(route => route.geoJSON != '')
 const routeArr = {}
 routesWithGeoJSON.forEach(r => {
   const routeL = L.geoJSON(r.geoJSON, { style: style })
+  routeL.routeId = r.route_id
   routeArr[r.route_id] = routeL
 })
+
 
 const geoJSONLayerGroup = L.layerGroup(Object.values(routeArr))
 geoJSONLayerGroup.addTo(map)
 
+geoJSONLayerGroup.eachLayer(layer => {
+  layer.on('click', layer => {
+    console.log(layer.target.routeId)
+    EventBus.$emit('route-selected', layer.target.routeId)
 
-vm.$on('selectedRoute', (routeId) => {
-  const selectedRouteLayer = routeArr[routeId]
+  })
+})
+
+
+EventBus.$on('route-selected', routeId => {
+  if (selectedRouteLayer) {
+    selectedRouteLayer.resetStyle()
+  }
+
+
+  selectedRouteLayer = routeArr[routeId]
   selectedRouteLayer.setStyle({ color: 'yellow' })
   map.fitBounds(selectedRouteLayer.getBounds())
-  map.setZoom(13)
-});
+
+})
+
+
 
 

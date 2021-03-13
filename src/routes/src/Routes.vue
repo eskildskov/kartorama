@@ -46,7 +46,7 @@ export default {
     return {
       routes: routes,
       aspect: [],
-      sortBy: 'mountain_name'
+      sortBy: 'mountain_name',
     }
   },
   methods: {
