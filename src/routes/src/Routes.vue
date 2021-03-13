@@ -18,9 +18,9 @@
       </section>
 
     <section class="block">
-      <div v-if="matchedRoutes.length">
+      <div v-if="filteredRoutes.length">
         <RouteListItem
-          v-for="route in matchedRoutes"
+          v-for="route in filteredRoutes"
           :key="route.route_id"
           :route="route"
         />
@@ -37,6 +37,7 @@
 import RouteListItem from './RouteListItem.vue'
 import routes from '../data/routes.json'
 import _ from 'lodash'
+import EventBus from './EventBus'
 
 export default {
   components: {
@@ -50,13 +51,17 @@ export default {
     }
   },
   methods: {
-    onClick () {
-      this.$root.$emit('selectedRoute', ); }
   },
-  computed: {
-    matchedRoutes: function () {
-      // if (!this.aspect.length) return []
 
+  watch: {
+    filteredRoutes(routes) {
+      const routeIds = routes.map( r => r.route_id)
+      EventBus.$emit('routes-filtered', routeIds)
+    }
+  },
+
+  computed: {
+    filteredRoutes: function () {
       const filteredRoutes = routes.filter(r => {
         return this.aspect.every(a => {
           return r.aspect.some(aspectString => {

@@ -282,25 +282,26 @@ const geoJSONLayerGroup = L.layerGroup(Object.values(routeArr))
 geoJSONLayerGroup.addTo(map)
 
 geoJSONLayerGroup.eachLayer(layer => {
-  layer.on('click', layer => {
-    console.log(layer.target.routeId)
-    EventBus.$emit('route-selected', layer.target.routeId)
-
+  layer.on('click', e => {
+    EventBus.$emit('route-selected', e.target.routeId)
   })
 })
-
 
 EventBus.$on('route-selected', routeId => {
   if (selectedRouteLayer) {
     selectedRouteLayer.resetStyle()
   }
 
-
   selectedRouteLayer = routeArr[routeId]
-  selectedRouteLayer.setStyle({ color: 'yellow', weight: 6})
-  map.fitBounds(selectedRouteLayer.getBounds())
+  selectedRouteLayer.setStyle({ color: 'yellow', weight: 6 })
+  map.panTo(selectedRouteLayer.getBounds().getCenter())
 })
 
 
-
+EventBus.$on('routes-filtered', routeIds => {
+  Object.values(routeArr).forEach(layer => layer.removeFrom(map))
+  routeIds.forEach(routeId => {
+    routeArr[routeId].addTo(map)
+  })
+})
 
