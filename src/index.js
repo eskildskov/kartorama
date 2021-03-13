@@ -297,9 +297,8 @@ EventBus.$on('route-selected', routeId => {
 
 
   selectedRouteLayer = routeArr[routeId]
-  selectedRouteLayer.setStyle({ color: 'yellow' })
+  selectedRouteLayer.setStyle({ color: 'yellow', weight: 6})
   map.fitBounds(selectedRouteLayer.getBounds())
-
 })
 
 

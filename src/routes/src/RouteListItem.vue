@@ -1,5 +1,9 @@
 <template>
-  <article @click="onClick" class="media mt-0 pb-2 pt-2"> 
+  <article
+    @click="onClick"
+    class="media mt-0 pb-2 pt-2"
+    v-bind:class="{ active: isActive }"
+  > 
     <div class="media-content">
       <div class="content">
         <p>
@@ -63,5 +67,10 @@ export default {
 article:hover {
   background: rgb(240, 240, 240);
   cursor: pointer;
+}
+
+.active {
+  background:rgb(240, 240, 240);
+  font-size: 1.1em;
 }
 </style>
