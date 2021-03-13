@@ -21,8 +21,10 @@
     "eslint-loader": "^3.0.0",
     "laravel-mix": "^6.0.13",
     "node-fetch": "^2.6.0",
-    "node-sass": "^4.14",
+    "node-sass": "^4.14.1",
     "patch-package": "^6.2.2",
+    "poi": "^12.10.3",
+    "postcss-preset-env": "^6.7.0",
     "prettier": "^2.0.4",
     "resolve-url-loader": "^3.1.2",
     "sass": "^1.32.8",
@@ -49,7 +51,6 @@
     "leaflet-groupedlayercontrol": "^0.6.1",
     "leaflet.locatecontrol": "^0.71.1",
     "leaflet.nontiledlayer": "^1.0.8",
-    "postcss-preset-env": "^6.7.0",
     "vue": "^2.6.12",
     "xmldom": "^0.3.0"
   }
