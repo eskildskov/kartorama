@@ -8,7 +8,7 @@
       <div class="content">
         <p>
           <strong class="mountain-name">{{ route.mountain_name }}</strong>
-          <small v-if="route.route_name != 'Normalveien'">{{ route.route_name }}</small>
+          <small v-if="route.route_name != 'Normalveien' || isActive ">{{ route.route_name }}</small>
 
           <span v-show="isActive === false">
             <i class="iconify ml-2" data-icon="mdi-car"></i> <small>{{ route.max_start_altitude }} moh</small>
@@ -70,6 +70,7 @@
 
 <script>
 import EventBus from './EventBus'
+import scrollIntoView from 'smooth-scroll-into-view-if-needed'
 
 export default {
   props: {
@@ -92,7 +93,8 @@ export default {
     EventBus.$on('route-selected', routeId => {
       if (this.route.route_id == routeId) {
         this.isActive = true
-        this.$el.scrollIntoView()
+        scrollIntoView(this.$el, {scrollMode: 'if-needed', behavior:'smooth'}
+)
       }
       else {
         this.isActive = false
