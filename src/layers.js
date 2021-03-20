@@ -26,7 +26,7 @@ export const vectorBaseMap = L.tileLayer(
 export const kastOverlayMap = dynamicMapLayer(
   {
     url:
-      'https://gis2.nve.no/arcgis/rest/services/wmts/KastWMTS_19022021/MapServer',
+      'https://gis2.nve.no/arcgis/rest/services/wmts/KastWMTS/MapServer',
     layers: [0, 1, 2, 3]
   },
   {
