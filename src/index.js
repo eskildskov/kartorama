@@ -266,17 +266,24 @@ const vm = new Vue({
 
 const style = {
   color: 'red',
+  dashArray: '10, 10'
 }
+
+
 
 const routesWithGeoJSON = routesData.filter(route => route.geoJSON != '')
 
 const routeArr = {}
 routesWithGeoJSON.forEach(r => {
-  const routeL = L.geoJSON(r.geoJSON, { style: style })
+  const routeL = L.geoJSON(r.geoJSON, { 
+    style: {
+      color: 'red',
+      dashArray: r.is_ascending ? '0' : '10, 10'
+    } 
+  })
   routeL.routeId = r.route_id
   routeArr[r.route_id] = routeL
 })
-
 
 const geoJSONLayerGroup = L.layerGroup(Object.values(routeArr))
 geoJSONLayerGroup.addTo(map)
