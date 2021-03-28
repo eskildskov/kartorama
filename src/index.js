@@ -278,7 +278,7 @@ routesWithGeoJSON.forEach(r => {
   const routeL = L.geoJSON(r.geoJSON, { 
     style: {
       color: 'red',
-      dashArray: r.is_descent ? '10, 10' : '0'
+      dashArray: r.is_descent ? '8, 15' : '0'
     } 
   })
   routeL.routeId = r.route_id
