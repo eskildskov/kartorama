@@ -18,7 +18,6 @@
         <b-checkbox v-model="no_avalanche_start_zones" native-value="True">Ingen obligatoriske</b-checkbox>
       </b-field>
 
-
       <b-field horizontal label="Laveste starthøyde">
         <b-slider v-model="min_start_altitude" size="is-small" :step="100" :min="0" :max="400" :tooltip="false" :ticks="false">
           <template v-for="val in [0, 100, 200, 300, 400]">
@@ -27,13 +26,23 @@
         </b-slider>
       </b-field>
 
-      <b-field horizontal label="Sorter">
+      <b-field horizontal label="Område">
+        <b-select size="is-small" v-model="area">
+          <option value="Alle">Alle</option>
+          <option value="Austefjorden">Austefjorden</option>
+          <option value="Hornindal">Hornindal</option>
+          <option value="Kolåshalvøya">Kolåshalvøya</option>
+          <option value="Rånahalvøya">Rånahalvøya</option>
+          <option value="Ytre">Ytre</option>
+        </b-select>
+      </b-field>
+
+      <!-- <b-field horizontal label="Sorter">
         <b-select size="is-small" v-model="sortBy" placeholder="Sorter">
           <option value="mountain_name">Fjell</option>
           <option value="max_start_altitude">Starthøyde</option>
-          <option value="area">Område</option>
         </b-select>
-      </b-field>
+      </b-field> -->
     </section>
 
     <section class="block">
@@ -66,12 +75,24 @@ export default {
       routes: routes,
       aspect: [],
       kast: [],
+      area: 'Alle',
       min_start_altitude: 0,
       no_avalanche_start_zones: false,
       sortBy: 'mountain_name',
     }
   },
   methods: {
+    filterByArea: function () {
+      let filteredRoutes = []
+      if (this.area == 'Alle') {
+        filteredRoutes = this.routes
+      } else {
+        filteredRoutes = this.routes.filter(r => this.area == r.area)
+      }
+
+      return filteredRoutes
+    },
+
     filterByAspect: function () {
       let filteredRoutes = []
 
@@ -136,7 +157,8 @@ export default {
         this.filterByKAST(),
         this.filterByAspect(),
         this.filterByAltitude(),
-        this.filterByAvalancheZones()
+        this.filterByAvalancheZones(),
+        this.filterByArea()
       )
       return _.sortBy(filteredRoutes, this.sortBy)
     }
