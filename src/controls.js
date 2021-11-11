@@ -1,5 +1,5 @@
-import * as FileLayer from 'leaflet-filelayer'
-import togeojson from './vendor/togeojson'
+// import * as FileLayer from 'leaflet-filelayer'
+// import togeojson from './vendor/togeojson'
 import 'leaflet-groupedlayercontrol'
 import 'leaflet.locatecontrol'
 import { baseMaps, groupedOverlays } from './layers'
@@ -31,15 +31,15 @@ export const layerControl = L.control.groupedLayers(baseMaps, groupedOverlays, {
 })
 
 // hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
-FileLayer(null, L, togeojson)
-L.Control.FileLayerLoad.LABEL = "<span class='fa fa-file-upload'></span>"
+// FileLayer(null, L, togeojson)
+// L.Control.FileLayerLoad.LABEL = "<span class='fa fa-file-upload'></span>"
 
-export const fileControl = L.Control.fileLayerLoad({
-  layer: L.geoJson,
-  layerOptions: { style: { color: 'red' } },
-  position: 'topleft',
-  fileSizeLimit: 4000
-})
+// export const fileControl = L.Control.fileLayerLoad({
+//   layer: L.geoJson,
+//   layerOptions: { style: { color: 'red' } },
+//   position: 'topleft',
+//   fileSizeLimit: 4000
+// })
 
 export const locateControl = L.control.locate({
   position: 'bottomleft',

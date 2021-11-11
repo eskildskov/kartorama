@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import '@geoman-io/leaflet-geoman-free'
 import './vendor/leaflet-slider/leaflet-slider'
-import { scaleControl, zoomControl, layerControl, fileControl, locateControl, drawingOpts } from './controls'
+import { scaleControl, zoomControl, layerControl, locateControl, drawingOpts } from './controls'
 import * as turf from '@turf/turf'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
@@ -84,7 +84,7 @@ scaleControl.addTo(map)
 zoomControl.addTo(map)
 opacitySlider.addTo(map)
 layerControl.addTo(map)
-fileControl.addTo(map)
+// fileControl.addTo(map)
 locateControl.addTo(map)
 map.pm.addControls(drawingOpts)
 
@@ -156,17 +156,17 @@ function changeOverlayControl (e) {
 
 // FILE LOADER
 
-fileControl.loader.on('data:error', function (error) {
-  console.error(error)
-})
+// fileControl.loader.on('data:error', function (error) {
+//   console.error(error)
+// })
 
-fileControl.loader.on('data:loaded', function (e) {
-  Elevation.addElevationToLayer(e.layer).then(layerWithElevation => {
-    map.removeLayer(e.layer)
-    map.addLayer(layerWithElevation)
-    addTooltipToRoute(layerWithElevation)
-  })
-})
+// fileControl.loader.on('data:loaded', function (e) {
+//   Elevation.addElevationToLayer(e.layer).then(layerWithElevation => {
+//     map.removeLayer(e.layer)
+//     map.addLayer(layerWithElevation)
+//     addTooltipToRoute(layerWithElevation)
+//   })
+// })
 
 var elevationOptions = {
   theme: 'lime-theme',
