@@ -1,9 +1,11 @@
-@import '~leaflet/dist/leaflet.css';
-@import '~leaflet.locatecontrol/src/L.Control.Locate.scss';
-@import '~@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
-@import '~@fortawesome/fontawesome-free/css/all.css';
+@import 'leaflet/dist/leaflet.css';
+@import 'leaflet.locatecontrol/src/L.Control.Locate.scss';
+@import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+@import '@fortawesome/fontawesome-free/css/all.css';
 @import '../vendor/leaflet-slider/leaflet-slider.css';
-@import '~@raruto/leaflet-elevation/src/leaflet-elevation.css';
+@import '@raruto/leaflet-elevation/src/index.css';
+@import '../vendor/leaflet-sidebar/L.Control.Sidebar.css';
+@import '../vendor/leaflet-sidebar/L.Control.Sidebar.scss';
 
 body {
   padding: 0;

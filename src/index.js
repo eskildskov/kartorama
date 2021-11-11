@@ -1,18 +1,13 @@
 import L from 'leaflet'
 import '@geoman-io/leaflet-geoman-free'
 import './vendor/leaflet-slider/leaflet-slider'
-import 'leaflet-groupedlayercontrol'
-import * as FileLayer from 'leaflet-filelayer'
-import 'leaflet.locatecontrol'
+import { scaleControl, zoomControl, layerControl, locateControl, drawingOpts } from './controls'
 import * as turf from '@turf/turf'
-import './styles/index.scss'
-import togeojson from './vendor/togeojson'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
 import {
   baseMaps,
-  overlayMaps,
-  groupedOverlays
+  overlayMaps
 } from './layers'
 
 const localStorage = window.localStorage
@@ -52,6 +47,23 @@ const zoom = localStorage.getItem('currentZoom')
 
 map.setView(center, zoom)
 
+const opacitySlider = L.control.slider(
+  function (value) {
+    activeOverlay.setOpacity(value)
+  },
+  {
+    min: 0,
+    max: 1.0,
+    step: 0.01,
+    position: 'bottomright',
+    collapsed: false,
+    syncSlider: true,
+    title: 'Gjennomsiktighet',
+    showValue: false,
+    value: activeOverlay.options.opacity
+  }
+)
+
 // DRAWING OPTIONS
 map.pm.setGlobalOptions({
   tooltips: false,
@@ -60,72 +72,11 @@ map.pm.setGlobalOptions({
   finishOn: null
 })
 
-// SET CONTROLS IN RIGHT ORDER
-const scaleControl = L.control.scale({ imperial: false, maxWidth: 200 })
-const zoomControl = L.control.zoom({
-  position: 'bottomleft'
-})
-
-const drawingOpts = {
-  position: 'bottomleft',
-  drawCircle: false,
-  drawMarker: false,
-  drawCircleMarker: false,
-  drawRectangle: false,
-  drawPolygon: false,
-  dragMode: false,
-  cutPolygon: false,
-  removalMode: false,
-  editMode: false,
-  drawPolyline: true
-}
-
-const opacitySlider = L.control
-  .slider(
-    function (value) {
-      activeOverlay.setOpacity(value)
-    },
-    {
-      min: 0,
-      max: 1.0,
-      step: 0.01,
-      position: 'bottomright',
-      collapsed: false,
-      syncSlider: true,
-      title: 'Gjennomsiktighet',
-      showValue: false,
-      value: activeOverlay.options.opacity
-    }
-  )
-const layerControl = L.control.groupedLayers(baseMaps, groupedOverlays, {
-  exclusiveGroups: ['Tillegg'],
-  position: 'bottomright',
-  collapsed: true
-})
-
-// hack: https://github.com/makinacorpus/Leaflet.FileLayer/issues/60
-FileLayer(null, L, togeojson)
-L.Control.FileLayerLoad.LABEL = "<span class='fa fa-file-upload'></span>"
-
-const fileControl = L.Control.fileLayerLoad({
-  layer: L.geoJson,
-  layerOptions: { style: { color: 'red' } },
-  position: 'topleft',
-  fileSizeLimit: 4000
-})
-
-const locateControl = L.control
-  .locate({
-    position: 'bottomleft',
-    initialZoomLevel: 15,
-    icon: 'fa fa-map-marker-alt'
-  })
-
 scaleControl.addTo(map)
 zoomControl.addTo(map)
 opacitySlider.addTo(map)
 layerControl.addTo(map)
-fileControl.addTo(map)
+// fileControl.addTo(map)
 locateControl.addTo(map)
 map.pm.addControls(drawingOpts)
 
@@ -155,7 +106,7 @@ map.on('pm:drawstart', ({ workingLayer }) => {
 })
 
 //
-// SAVE STATE
+// STATE
 //
 
 opacitySlider.slider.addEventListener('click', function () {
@@ -197,17 +148,17 @@ function changeOverlayControl (e) {
 
 // FILE LOADER
 
-fileControl.loader.on('data:error', function (error) {
-  console.error(error)
-})
+// fileControl.loader.on('data:error', function (error) {
+//   console.error(error)
+// })
 
-fileControl.loader.on('data:loaded', function (e) {
-  Elevation.addElevationToLayer(e.layer).then(layerWithElevation => {
-    map.removeLayer(e.layer)
-    map.addLayer(layerWithElevation)
-    addTooltipToRoute(layerWithElevation)
-  })
-})
+// fileControl.loader.on('data:loaded', function (e) {
+//   Elevation.addElevationToLayer(e.layer).then(layerWithElevation => {
+//     map.removeLayer(e.layer)
+//     map.addLayer(layerWithElevation)
+//     addTooltipToRoute(layerWithElevation)
+//   })
+// })
 
 var elevationOptions = {
   theme: 'lime-theme',
@@ -288,3 +239,4 @@ function showElevationProfile (layer) {
   layer.controlElevationProfile.layer.addTo(map)
   selectedRouteLayer = layer
 }
+
