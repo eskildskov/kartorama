@@ -5,18 +5,10 @@ import { scaleControl, zoomControl, layerControl, locateControl, drawingOpts } f
 import * as turf from '@turf/turf'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
-// import './vendor/leaflet-sidebar/L.Control.Sidebar'
-import Vue from 'vue'
-import Buefy from 'buefy'
-import Routes from './routes/src/Routes.vue'
-import routesData from './routes/data/routes.json'
-import EventBus from './routes/src/EventBus'
-
 import {
   baseMaps,
   overlayMaps
 } from './layers'
-// import Routes from './routes/routes'
 
 const localStorage = window.localStorage
 const map = L.map('map', { zoomControl: false })
@@ -247,68 +239,4 @@ function showElevationProfile (layer) {
   layer.controlElevationProfile.layer.addTo(map)
   selectedRouteLayer = layer
 }
-
-// const sidebar = L.control.sidebar('sidebar', {
-//   position: 'right'
-// })
-
-// map.addControl(sidebar)
-// sidebar.show()
-
-
-Vue.use(Buefy)
-
-const vm = new Vue({
-  el: '#sidebar-content',
-  template: '<Routes/>',
-  components: { Routes }
-})
-
-const style = {
-  color: 'red',
-  dashArray: '10, 10'
-}
-
-
-
-const routesWithGeoJSON = routesData.filter(route => route.geoJSON != '')
-
-const routeArr = {}
-routesWithGeoJSON.forEach(r => {
-  const routeL = L.geoJSON(r.geoJSON, { 
-    style: {
-      color: 'red',
-      dashArray: r.is_descent ? '8, 15' : '0'
-    } 
-  })
-  routeL.routeId = r.route_id
-  routeArr[r.route_id] = routeL
-})
-
-const geoJSONLayerGroup = L.layerGroup(Object.values(routeArr))
-geoJSONLayerGroup.addTo(map)
-
-geoJSONLayerGroup.eachLayer(layer => {
-  layer.on('click', e => {
-    EventBus.$emit('route-selected', e.target.routeId)
-  })
-})
-
-EventBus.$on('route-selected', routeId => {
-  if (selectedRouteLayer) {
-    selectedRouteLayer.resetStyle()
-  }
-
-  selectedRouteLayer = routeArr[routeId]
-  selectedRouteLayer.setStyle({ color: 'yellow', weight: 6 })
-  map.panTo(selectedRouteLayer.getBounds().getCenter())
-})
-
-
-EventBus.$on('routes-filtered', routeIds => {
-  Object.values(routeArr).forEach(layer => layer.removeFrom(map))
-  routeIds.forEach(routeId => {
-    routeArr[routeId].addTo(map)
-  })
-})
 

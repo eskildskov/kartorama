@@ -5,24 +5,15 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    
-    <title>Skiturer</title>
+    <title>Kart</title>
 
-    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="/styles/index.scss" />
 
   </head>
 
   <body>
-    <div style="display:flex">
-      <div style="flex-basis: 70%;">
-        <div id="map"></div>
-      </div>
-      <div class="is-size-7" style="flex-basis: 30%; overflow:auto; height:100vh; padding: 0 20px">
-        <div id="sidebar-content"></div>
-      </div>
-    </div>
-
-    <script src="js/index.js"></script>
+    <div id="map"></div>
+    <script type="module" src="/index.js"></script>
     <script src="https://code.iconify.design/1/1.0.7/iconify.min.js"></script>
   </body>
 </html>

@@ -1,6 +1,5 @@
 import * as turf from '@turf/turf'
-import fetch from 'node-fetch'
-import * as GeoTIFF from 'geotiff/dist-browser/geotiff' // FIX https://github.com/geotiffjs/geotiff.js/issues/98
+import GeoTIFF, { fromArrayBuffer } from 'geotiff';
 import L from 'leaflet'
 
 export default class Elevation {
@@ -59,7 +58,7 @@ class ElevationToGeoJson {
 
     const response = await fetch(this.url)
     const arrayBuffer = await response.arrayBuffer()
-    this.tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer)
+    this.tiff = await fromArrayBuffer(arrayBuffer)
     this.image = await this.tiff.getImage()
 
     this.geoTransform = this.generateGeotransform()
