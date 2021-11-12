@@ -3,6 +3,7 @@ import '@geoman-io/leaflet-geoman-free'
 import './vendor/leaflet-slider/leaflet-slider'
 import { scaleControl, zoomControl, layerControl, locateControl, drawingOpts } from './controls'
 import * as turf from '@turf/turf'
+import StateHandler from './state-handler'
 import '@raruto/leaflet-elevation'
 import Elevation from './elevation'
 import {
@@ -12,44 +13,17 @@ import {
 
 const localStorage = window.localStorage
 const map = L.map('map', { zoomControl: false })
+map.state = {}
 
-let activeOverlay
 let selectedRouteLayer
 
-//
-// INIT MAP AND LAYERS WITH SAVED STATE
-//
-const activeBaseLayerName = localStorage.getItem('activeBaseLayerName')
-  ? localStorage.getItem('activeBaseLayerName')
-  : 'Vektorkart'
-if (activeBaseLayerName) {
-  map.addLayer(baseMaps[activeBaseLayerName])
-}
+const stateHandler = StateHandler()
+stateHandler.initState(map)
+stateHandler.addStateHandlers(map)
 
-const activeOverlayName = localStorage.getItem('activeOverlayName')
-  ? localStorage.getItem('activeOverlayName')
-  : 'Helning'
-map.addLayer(overlayMaps[activeOverlayName])
-activeOverlay = overlayMaps[activeOverlayName]
-
-const currentOpacity = localStorage.getItem('currentOpacity')
-  ? localStorage.getItem('currentOpacity')
-  : 0
-activeOverlay.setOpacity(currentOpacity)
-
-const center = localStorage.getItem('currentCenter')
-  ? JSON.parse(localStorage.getItem('currentCenter'))
-  : [62.5661863495104, 7.7187538146972665]
-
-const zoom = localStorage.getItem('currentZoom')
-  ? localStorage.getItem('currentZoom')
-  : 8
-
-map.setView(center, zoom)
-
-const opacitySlider = L.control.slider(
+map.opacitySlider = L.control.slider(
   function (value) {
-    activeOverlay.setOpacity(value)
+    map.state.overlay.setOpacity(value)
   },
   {
     min: 0,
@@ -60,7 +34,7 @@ const opacitySlider = L.control.slider(
     syncSlider: true,
     title: 'Gjennomsiktighet',
     showValue: false,
-    value: activeOverlay.options.opacity
+    value: map.state.overlay.options.opacity
   }
 )
 
@@ -74,7 +48,7 @@ map.pm.setGlobalOptions({
 
 scaleControl.addTo(map)
 zoomControl.addTo(map)
-opacitySlider.addTo(map)
+map.opacitySlider.addTo(map)
 layerControl.addTo(map)
 // fileControl.addTo(map)
 locateControl.addTo(map)
@@ -109,8 +83,8 @@ map.on('pm:drawstart', ({ workingLayer }) => {
 // STATE
 //
 
-opacitySlider.slider.addEventListener('click', function () {
-  localStorage.setItem('currentOpacity', opacitySlider.slider.valueAsNumber)
+map.opacitySlider.slider.addEventListener('click', function () {
+  localStorage.setItem('currentOpacity', map.opacitySlider.slider.valueAsNumber)
 })
 
 function savePosition (e) {
@@ -136,13 +110,13 @@ map.on('moveend', savePosition)
 map.on('zoomend', saveZoom)
 
 function changeOverlayControl (e) {
-  activeOverlay = e.layer
-  if (opacitySlider.slider.valueAsNumber === 0) {
+  map.state.overlay = e.layer
+  if (map.opacitySlider.slider.valueAsNumber === 0) {
     const val = 0.2
-    activeOverlay.setOpacity(val)
-    opacitySlider.slider.value = val
+    map.state.overlay.setOpacity(val)
+    map.opacitySlider.slider.value = val
   } else {
-    activeOverlay.setOpacity(opacitySlider.slider.value)
+    map.state.overlay.setOpacity(map.opacitySlider.slider.value)
   }
 }
 
