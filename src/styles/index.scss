@@ -5,6 +5,28 @@
 @import '../vendor/leaflet-slider/leaflet-slider.css';
 @import '@raruto/leaflet-elevation/src/index.css';
 
+.elevation-polyline {
+  stroke: rgb(0, 50, 213);
+  stroke-opacity:1;
+}
+
+.elevation-control.elevation .background {
+  background-color:rgba(255, 255, 255, 0.9)
+}
+
+.elevation-control.elevation .grid .tick line {
+  stroke: rgb(230, 230, 230);
+
+}
+
+.elevation-control.elevation .area {
+  fill: #3e5bbc;
+}
+
+path.is-drawing{
+  filter: drop-shadow(1px 1px 0 #FFF) drop-shadow(-1px -1px 0 #FFF) drop-shadow(1px -1px 0 #FFF) drop-shadow(-1px 1px 0 #FFF);
+}
+
 body {
   padding: 0;
   margin: 0;

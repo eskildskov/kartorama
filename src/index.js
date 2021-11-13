@@ -15,7 +15,6 @@ map.state = {};
 stateHandler.initState(map);
 stateHandler.addStateHandlers(map);
 const routes = routeHandler(map);
-routes.init();
 
 map.opacitySlider = L.control.slider(
 	(value) => {
@@ -38,6 +37,7 @@ scaleControl.addTo(map);
 zoomControl.addTo(map);
 map.opacitySlider.addTo(map);
 layerControl.addTo(map);
+routes.init();
 // FileControl.addTo(map)
 locateControl.addTo(map);
 

@@ -5,8 +5,10 @@ import * as turf from '@turf/turf';
 import Elevation from './elevation.js';
 
 export default function routeHandler(map) {
+	const pathOptions = {color: '#0238eb'};
+
 	const elevationOptions = {
-		theme: 'lime-theme',
+		theme: 'kartorama-theme',
 		detached: false,
 		autohide: true, // If (!detached) autohide chart profile on chart mouseleave
 		collapsed: false, // If (!detached) initial state of chart profile control
@@ -16,6 +18,7 @@ export default function routeHandler(map) {
 		reverseCoords: false, // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
 		summary: false,
 		legend: false,
+		ruler: false,
 		width: 400,
 		height: 150,
 		responsive: true,
@@ -97,6 +100,7 @@ export default function routeHandler(map) {
 	}
 
 	function initElevationLayer(layerWithElevation) {
+		layerWithElevation.setStyle(pathOptions);
 		map.addLayer(layerWithElevation);
 
 		const geojsonWithElevation = layerWithElevation.toGeoJSON();
@@ -154,8 +158,6 @@ export default function routeHandler(map) {
 		drawPolyline: true,
 	};
 
-	map.pm.addControls(drawingOptions);
-
 	map.on('pm:drawstart', ({workingLayer}) => {
 		let currentDistance = 0;
 		const tooltip = L.tooltip();
@@ -186,8 +188,12 @@ export default function routeHandler(map) {
 				allowSelfIntersection: true,
 				markerStyle: {draggable: false},
 				finishOn: null,
+				templineStyle: {...pathOptions, className: 'is-drawing'},
+				hintlineStyle: {...pathOptions, className: 'is-drawing'},
+				pathOptions,
 			});
 			map.pm.setLang('no');
+			map.pm.addControls(drawingOptions);
 		},
 	};
 }
