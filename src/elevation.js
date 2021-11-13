@@ -46,6 +46,7 @@ export default class Elevation {
 class ElevationToGeoJson {
 	constructor(geojson) {
 		this.geojson = geojson;
+		this.url = this.generateWMSUrl(this.geojson);
 	}
 
 	static async addElevationToGeojson(geojson) {
@@ -56,7 +57,6 @@ class ElevationToGeoJson {
 
 	async fetchElevationData() {
 		// Return array with the elevation data
-		this.url = this.generateWMSUrl(this.geojson);
 
 		const response = await fetch(this.url);
 		const arrayBuffer = await response.arrayBuffer();
