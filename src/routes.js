@@ -148,6 +148,7 @@ export default function routeHandler(map) {
 		drawPolygon: false,
 		dragMode: false,
 		cutPolygon: false,
+		rotateMode: false,
 		removalMode: false,
 		editMode: false,
 		drawPolyline: true,
