@@ -71,7 +71,7 @@ export default function routeHandler(map) {
 		popupElement.innerHTML = `Distanse: ${data.distance} km. Opp: ${data.elevationGain} m. Ned: ${data.elevationLoss} m. `;
 
 		const removeLayerLink = document.createElement('a');
-		removeLayerLink.innerText = 'Slett spor';
+		removeLayerLink.textContent = 'Slett spor';
 		removeLayerLink.href = '#';
 		removeLayerLink.addEventListener('click', () => {
 			deactivateRoute(routeLayer);
