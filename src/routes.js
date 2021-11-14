@@ -78,7 +78,7 @@ export default function routeHandler(map) {
 			routeLayer.remove();
 		});
 
-		popupElement.append(removeLayerLink);
+		// PopupElement.append(removeLayerLink);
 
 		return popupElement;
 	}
