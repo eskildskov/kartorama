@@ -5,7 +5,7 @@ import * as turf from '@turf/turf';
 import Elevation from './elevation.js';
 
 export default function routeHandler(map) {
-	const pathOptions = {color: '#0238eb'};
+	const pathOptions = {className: 'route'};
 
 	const elevationOptions = {
 		theme: 'kartorama-theme',
@@ -124,14 +124,13 @@ export default function routeHandler(map) {
 	}
 
 	// When finished drawing
-	map.on('pm:create', (event) => {
+	map.on('pm:create', async (event) => {
 		const geojson = event.layer.toGeoJSON();
 		const newLayer = L.geoJSON(Elevation.addPointsToLineString(geojson, 0.05));
 
-		Elevation.addElevationToLayer(newLayer).then((layerWithElevation) => {
-			map.removeLayer(event.layer);
-			initElevationLayer(layerWithElevation);
-		});
+		const layerWithElevation = await Elevation.addElevationToLayer(newLayer);
+		map.removeLayer(event.layer);
+		initElevationLayer(layerWithElevation);
 	});
 
 	function hideElevationProfile(layer) {
@@ -188,8 +187,8 @@ export default function routeHandler(map) {
 				allowSelfIntersection: true,
 				markerStyle: {draggable: false},
 				finishOn: null,
-				templineStyle: {...pathOptions, className: 'is-drawing'},
-				hintlineStyle: {...pathOptions, className: 'is-drawing'},
+				templineStyle: {className: 'route is-drawing'},
+				hintlineStyle: {className: 'route is-drawing'},
 				pathOptions,
 			});
 			map.pm.setLang('no');
