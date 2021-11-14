@@ -125,13 +125,17 @@ export default function routeHandler(map) {
 
 	// When finished drawing
 	map.on('pm:create', async (event) => {
-		const geojson = event.layer.toGeoJSON();
+		addElevationToLayer(event.layer);
+	});
+
+	async function addElevationToLayer(layer) {
+		const geojson = layer.toGeoJSON();
 		const newLayer = L.geoJSON(Elevation.addPointsToLineString(geojson, 0.05));
 
 		const layerWithElevation = await Elevation.addElevationToLayer(newLayer);
-		map.removeLayer(event.layer);
+		map.removeLayer(layer);
 		initElevationLayer(layerWithElevation);
-	});
+	}
 
 	function hideElevationProfile(layer) {
 		layer.controlElevationProfile._container.style.display = 'none';
@@ -194,5 +198,6 @@ export default function routeHandler(map) {
 			map.pm.setLang('no');
 			map.pm.addControls(drawingOptions);
 		},
+		addElevationToLayer,
 	};
 }

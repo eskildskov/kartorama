@@ -5,6 +5,7 @@ import {
 	zoomControl,
 	layerControl,
 	locateControl,
+	fileControl,
 } from './controls.js';
 import stateHandler from './state-handler.js';
 import routeHandler from './routes.js';
@@ -32,13 +33,12 @@ map.opacitySlider = L.control.slider(
 		value: map.state.overlay.options.opacity,
 	},
 );
-
 scaleControl.addTo(map);
 zoomControl.addTo(map);
 map.opacitySlider.addTo(map);
 layerControl.addTo(map);
 routes.init();
-// FileControl.addTo(map)
+fileControl.addTo(map);
 locateControl.addTo(map);
 
 //
@@ -85,16 +85,10 @@ function changeOverlayControl(event) {
 	}
 }
 
-// FILE LOADER
+fileControl.loader.on('data:error', function (error) {
+	console.log(error);
+});
 
-// fileControl.loader.on('data:error', function (error) {
-//   console.error(error)
-// })
-
-// fileControl.loader.on('data:loaded', function (e) {
-//   Elevation.addElevationToLayer(e.layer).then(layerWithElevation => {
-//     map.removeLayer(e.layer)
-//     map.addLayer(layerWithElevation)
-//     addTooltipToRoute(layerWithElevation)
-//   })
-// })
+fileControl.loader.on('data:loaded', function (event) {
+	routes.addElevationToLayer(event.layer);
+});
