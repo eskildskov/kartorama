@@ -6,7 +6,7 @@ specifiers:
   '@fortawesome/fontawesome-free': ^5.15.4
   '@geoman-io/leaflet-geoman-free': ^2.11.3
   '@mapbox/togeojson': ^0.16.0
-  '@raruto/leaflet-elevation': ^1.0.8
+  '@raruto/leaflet-elevation': ^1.7.3
   '@tmcw/togeojson': ^3.2.0
   '@turf/helpers': ^6.5.0
   '@turf/turf': ^6.5.0
