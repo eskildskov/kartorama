@@ -1,21 +1,24 @@
-import L from 'leaflet';
-import './vendor/leaflet-slider/leaflet-slider.js';
+import L from "leaflet";
+import "./vendor/leaflet-slider/leaflet-slider.js";
+import { createClient } from "@supabase/supabase-js";
 import {
 	scaleControl,
 	zoomControl,
 	layerControl,
 	locateControl,
 	fileControl,
-} from './controls.js';
-import stateHandler from './state-handler.js';
-import routeHandler from './routes.js';
+} from "./controls.js";
+import stateHandler from "./state-handler.js";
+import RouteHandler from "./routes.js";
+import "./save-route.js";
 
-const map = L.map('map', {zoomControl: false});
+const map = L.map("map", { zoomControl: false });
 map.state = {};
 
 stateHandler.initState(map);
 stateHandler.addStateHandlers(map);
-const routes = routeHandler(map);
+const routeHandler = RouteHandler(map);
+routeHandler.init();
 
 map.opacitySlider = L.control.slider(
 	(value) => {
@@ -25,54 +28,55 @@ map.opacitySlider = L.control.slider(
 		min: 0,
 		max: 1,
 		step: 0.01,
-		position: 'bottomright',
+		position: "bottomright",
 		collapsed: false,
 		syncSlider: true,
-		title: 'Gjennomsiktighet',
+		title: "Gjennomsiktighet",
 		showValue: false,
 		value: map.state.overlay.options.opacity,
-	},
+	}
 );
 scaleControl.addTo(map);
 zoomControl.addTo(map);
 map.opacitySlider.addTo(map);
 layerControl.addTo(map);
-routes.init();
+routeHandler.addToMap();
 fileControl.addTo(map);
 locateControl.addTo(map);
+L.Control.saveRoute().addTo(map);
 
 //
 // STATE
 //
 
-map.opacitySlider.slider.addEventListener('click', () => {
+map.opacitySlider.slider.addEventListener("click", () => {
 	localStorage.setItem(
-		'currentOpacity',
-		map.opacitySlider.slider.valueAsNumber,
+		"currentOpacity",
+		map.opacitySlider.slider.valueAsNumber
 	);
 });
 
 function savePosition() {
-	localStorage.setItem('currentCenter', JSON.stringify(map.getCenter()));
+	localStorage.setItem("currentCenter", JSON.stringify(map.getCenter()));
 }
 
 function saveZoom() {
-	localStorage.setItem('currentZoom', map.getZoom());
+	localStorage.setItem("currentZoom", map.getZoom());
 }
 
 function saveActiveBaseLayer(event) {
-	localStorage.setItem('activeBaseLayerName', event.name);
+	localStorage.setItem("activeBaseLayerName", event.name);
 }
 
 function saveActiveOverlay(event) {
-	localStorage.setItem('activeOverlayName', event.name);
+	localStorage.setItem("activeOverlayName", event.name);
 }
 
-map.on('baselayerchange', saveActiveBaseLayer);
-map.on('overlayadd', saveActiveOverlay);
-map.on('overlayadd', changeOverlayControl);
-map.on('moveend', savePosition);
-map.on('zoomend', saveZoom);
+map.on("baselayerchange", saveActiveBaseLayer);
+map.on("overlayadd", saveActiveOverlay);
+map.on("overlayadd", changeOverlayControl);
+map.on("moveend", savePosition);
+map.on("zoomend", saveZoom);
 
 function changeOverlayControl(event) {
 	map.state.overlay = event.layer;
@@ -85,10 +89,10 @@ function changeOverlayControl(event) {
 	}
 }
 
-fileControl.loader.on('data:error', function (error) {
+fileControl.loader.on("data:error", function (error) {
 	console.log(error);
 });
 
-fileControl.loader.on('data:loaded', function (event) {
-	routes.addElevationToLayer(event.layer);
+fileControl.loader.on("data:loaded", function (event) {
+	routeHandler.addElevationToLayer(event.layer);
 });
