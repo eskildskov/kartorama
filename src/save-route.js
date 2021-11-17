@@ -66,8 +66,6 @@ L.Control.SaveRoute = L.Control.extend({
 		if (geojson.length > 0) {
 			this._postRoute(geojson);
 		}
-
-		console.log(geojson);
 	},
 
 	generatePath(routeId) {
@@ -91,7 +89,6 @@ L.Control.SaveRoute = L.Control.extend({
 				const path = this.generatePath(data[0].id);
 				history.replaceState(null, "", path);
 				alert(`Ruten er lagret på ${window.location.origin + path}`);
-				console.log(data);
 			}
 		} catch (error) {
 			alert(error.message);

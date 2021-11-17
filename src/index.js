@@ -90,7 +90,7 @@ function changeOverlayControl(event) {
 }
 
 fileControl.loader.on("data:error", function (error) {
-	console.log(error);
+	alert(error);
 });
 
 fileControl.loader.on("data:loaded", function (event) {
