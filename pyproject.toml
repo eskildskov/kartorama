@@ -7,7 +7,7 @@ authors = ["Eskild Skov Pedersen  <eskild@eskildskov.no>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 pandas = "^1.2.2"
-pydantic = "^1.8.1"
+pydantic = "^1.8.2"
 ipykernel = "^5.5.3"
 
 [tool.poetry.dev-dependencies]
