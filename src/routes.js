@@ -1,212 +1,212 @@
+/* eslint-disable max-statements */
 import "@geoman-io/leaflet-geoman-free";
 import "@raruto/leaflet-elevation";
 import L from "leaflet";
-import * as turf from "@turf/turf";
-import Elevation from "./elevation.js";
+import { length } from "@turf/turf";
+
+import { addAltitudeToLayer, getElevationGainAndLoss } from "./elevation.js";
 
 const pathOptions = { className: "route" };
 
 const elevationOptions = {
-	theme: "kartorama-theme",
-	detached: false,
-	autohide: true, // If (!detached) autohide chart profile on chart mouseleave
-	collapsed: false, // If (!detached) initial state of chart profile control
-	position: "topright", // If (!detached) control position on one of map corners
-	followMarker: false, // Autoupdate map center on chart mouseover.
-	imperial: false, // Chart distance/elevation units.
-	reverseCoords: false, // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
-	summary: false,
-	legend: false,
-	ruler: false,
-	width: 400,
-	height: 150,
-	responsive: true,
+  theme: "kartorama-theme",
+  detached: false,
+  autohide: true, // If (!detached) autohide chart profile on chart mouseleave
+  collapsed: false, // If (!detached) initial state of chart profile control
+  position: "topright", // If (!detached) control position on one of map corners
+  followMarker: false, // Autoupdate map center on chart mouseover.
+  imperial: false, // Chart distance/elevation units.
+  reverseCoords: false, // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
+  summary: false,
+  legend: false,
+  ruler: false,
+  width: 400,
+  height: 150,
+  responsive: true,
 };
 
 const drawingOptions = {
-	position: "bottomleft",
-	drawCircle: false,
-	drawMarker: false,
-	drawCircleMarker: false,
-	drawRectangle: false,
-	drawPolygon: false,
-	dragMode: false,
-	cutPolygon: false,
-	rotateMode: false,
-	removalMode: false,
-	editMode: false,
-	drawPolyline: true,
+  position: "bottomleft",
+  drawCircle: false,
+  drawMarker: false,
+  drawCircleMarker: false,
+  drawRectangle: false,
+  drawPolygon: false,
+  dragMode: false,
+  cutPolygon: false,
+  rotateMode: false,
+  removalMode: false,
+  editMode: false,
+  drawPolyline: true,
 };
 
-function addTooltipToRouteLayer(layer) {
-	const geojson = layer.toGeoJSON();
-	const distance = turf.length(geojson).toFixed(1);
-	const { elevationGain, elevationLoss } = Elevation.sumElevation(geojson);
-	const popupElement = generateTooltip(
-		{
-			elevationGain,
-			elevationLoss,
-			distance,
-		},
-		layer
-	);
+function generateTooltip(data, layer) {
+  const popupElement = document.createElement("p");
+  popupElement.innerHTML = `Distanse: ${data.distance} km. Opp: ${data.elevationGain} m. Ned: ${data.elevationLoss} m. `;
 
-	layer.bindPopup(popupElement).openPopup();
+  // const removeLayerLink = document.createElement("a");
+  // removeLayerLink.textContent = "Slett spor";
+  // removeLayerLink.href = "#";
+  // removeLayerLink.addEventListener("click", () => {
+  //   deactivateRoute(layer);
+  //   layer.remove();
+  // });
+
+  // PopupElement.append(removeLayerLink);
+
+  return popupElement;
 }
 
-function generateTooltip(data, layer) {
-	const popupElement = document.createElement("p");
-	popupElement.innerHTML = `Distanse: ${data.distance} km. Opp: ${data.elevationGain} m. Ned: ${data.elevationLoss} m. `;
+function addTooltipToRouteLayer(layer) {
+  const geojson = layer.toGeoJSON();
+  const distance = length(geojson).toFixed(1);
+  const { elevationGain, elevationLoss } = getElevationGainAndLoss(geojson);
+  const popupElement = generateTooltip(
+    {
+      elevationGain,
+      elevationLoss,
+      distance,
+    },
+    layer
+  );
 
-	const removeLayerLink = document.createElement("a");
-	removeLayerLink.textContent = "Slett spor";
-	removeLayerLink.href = "#";
-	removeLayerLink.addEventListener("click", () => {
-		deactivateRoute(layer);
-		layer.remove();
-	});
+  layer.bindPopup(popupElement).openPopup();
+}
+function getElevationLine(routeLayer) {
+  return routeLayer.controlElevationProfile._layers._layers;
+}
 
-	// PopupElement.append(removeLayerLink);
+function deactivateElevationLine(routeLayer) {
+  const elevationLine = getElevationLine(routeLayer);
+  if (Object.keys(elevationLine).length > 0) {
+    Object.values(elevationLine)[0].remove();
+  }
+}
 
-	return popupElement;
+function hideElevationProfile(layer) {
+  layer.controlElevationProfile._container.style.display = "none";
 }
 
 export default function RouteHandler(map) {
-	function allUserRoutes() {
-		// Returns a feature collection with all the routes in the map
-		let geojsons = [];
-		map.routeLayers.eachLayer((routeLayer) => {
-			const geojson = routeLayer.toGeoJSON();
-			geojsons = [...geojsons, ...geojson.features];
-		});
+  function showElevationProfile(layer) {
+    layer.controlElevationProfile._container.style.display = "block";
+    layer.controlElevationProfile.addTo(map);
+  }
 
-		return geojsons;
-	}
+  function activateElevationLine(routeLayer) {
+    const elevationLine = getElevationLine(routeLayer);
+    if (Object.keys(elevationLine).length > 0) {
+      Object.values(elevationLine)[0].addTo(map);
+    }
+  }
 
-	map.on("click", () => {
-		if (map.state.activeRouteLayer) {
-			deactivateRoute(map.state.activeRouteLayer);
-		}
-	});
+  function allUserRoutes() {
+    let geojsons = [];
+    map.routeLayers.eachLayer((routeLayer) => {
+      const geojson = routeLayer.toGeoJSON();
+      geojsons = [...geojsons, ...geojson.features];
+    });
 
-	function deactivateRoute(routeLayer) {
-		hideElevationProfile(routeLayer);
-		deactivateElevationLine(routeLayer);
-		map.state.activeRouteLayer = null;
-	}
+    return geojsons;
+  }
 
-	function setActiveRoute(routeLayer) {
-		if (map.state.activeRouteLayer) {
-			deactivateRoute(map.state.activeRouteLayer);
-		}
+  function deactivateRoute(routeLayer) {
+    hideElevationProfile(routeLayer);
+    deactivateElevationLine(routeLayer);
+    map.state.activeRouteLayer = undefined;
+  }
 
-		activateElevationLine(routeLayer);
-		showElevationProfile(routeLayer);
-		map.state.activeRouteLayer = routeLayer;
-	}
+  function setActiveRoute(routeLayer) {
+    if (map.state.activeRouteLayer) {
+      deactivateRoute(map.state.activeRouteLayer);
+    }
 
-	function activateElevationLine(routeLayer) {
-		const elevationLine = getElevationLine(routeLayer);
-		if (Object.keys(elevationLine).length > 0) {
-			Object.values(elevationLine)[0].addTo(map);
-		}
-	}
+    activateElevationLine(routeLayer);
+    showElevationProfile(routeLayer);
+    map.state.activeRouteLayer = routeLayer;
+  }
 
-	function deactivateElevationLine(routeLayer) {
-		const elevationLine = getElevationLine(routeLayer);
-		if (Object.keys(elevationLine).length > 0) {
-			Object.values(elevationLine)[0].remove();
-		}
-	}
+  function initElevationLayer(layer) {
+    layer.setStyle(pathOptions);
+    map.addLayer(layer);
 
-	function getElevationLine(routeLayer) {
-		return routeLayer.controlElevationProfile._layers._layers;
-	}
+    const geojsonWithElevation = layer.toGeoJSON();
+    layer.controlElevationProfile = L.control.elevation(elevationOptions);
+    layer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation);
+    addTooltipToRouteLayer(layer);
+    map.routeLayers.addLayer(layer);
 
-	function initElevationLayer(layer) {
-		layer.setStyle(pathOptions);
-		map.addLayer(layer);
+    map.off("mousemove");
+    map.fitBounds(layer.getBounds());
 
-		const geojsonWithElevation = layer.toGeoJSON();
-		layer.controlElevationProfile = L.control.elevation(elevationOptions);
-		layer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation);
-		addTooltipToRouteLayer(layer);
-		map.routeLayers.addLayer(layer);
+    setActiveRoute(layer);
 
-		map.off("mousemove");
-		map.fitBounds(layer.getBounds());
+    layer.on("click", (event) => {
+      setActiveRoute(event.target);
+    });
+  }
 
-		setActiveRoute(layer);
+  async function addElevationAndReplace(layer) {
+    const layerWithElevation = await addAltitudeToLayer(layer);
+    map.removeLayer(layer);
+    initElevationLayer(layerWithElevation);
+  }
 
-		layer.on("click", (event) => {
-			setActiveRoute(event.target);
-		});
-	}
+  return {
+    init() {
+      map.on("click", () => {
+        if (map.state.activeRouteLayer) {
+          deactivateRoute(map.state.activeRouteLayer);
+        }
+      });
 
-	async function addElevationToLayer(layer) {
-		const geojson = layer.toGeoJSON();
-		const newLayer = L.geoJSON(Elevation.addPointsToLineString(geojson, 0.05));
+      map.routeLayers = L.layerGroup();
 
-		const layerWithElevation = await Elevation.addElevationToLayer(newLayer);
-		map.removeLayer(layer);
-		initElevationLayer(layerWithElevation);
-	}
+      map.pm.setGlobalOptions({
+        tooltips: false,
+        allowSelfIntersection: true,
+        markerStyle: { draggable: false },
+        // eslint-disable-next-line unicorn/no-null
+        finishOn: null,
+        templineStyle: { className: "route is-drawing" },
+        hintlineStyle: { className: "route is-drawing" },
+        pathOptions,
+      });
+      map.pm.setLang("no");
 
-	function hideElevationProfile(layer) {
-		layer.controlElevationProfile._container.style.display = "none";
-	}
+      map.on("pm:create", (event) => {
+        addElevationAndReplace(event.layer);
+      });
 
-	function showElevationProfile(layer) {
-		layer.controlElevationProfile._container.style.display = "block";
-		layer.controlElevationProfile.addTo(map);
-	}
+      map.on("pm:drawstart", ({ workingLayer }) => {
+        let currentDistance = 0;
+        const tooltip = L.tooltip();
+        workingLayer.bindTooltip(tooltip);
 
-	return {
-		init() {
-			map.routeLayers = L.layerGroup();
+        workingLayer.on("pm:vertexadded", (event) => {
+          const lastPoint = event.latlng;
+          const lineGeoJSON = workingLayer.toGeoJSON();
+          currentDistance = length(lineGeoJSON);
+          workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`);
+          workingLayer.openTooltip(event.latlng);
 
-			map.pm.setGlobalOptions({
-				tooltips: false,
-				allowSelfIntersection: true,
-				markerStyle: { draggable: false },
-				finishOn: null,
-				templineStyle: { className: "route is-drawing" },
-				hintlineStyle: { className: "route is-drawing" },
-				pathOptions,
-			});
-			map.pm.setLang("no");
+          map.on("mousemove", (event) => {
+            const METERS_IN_KM = 1000;
+            const currentPoint = event.latlng;
 
-			map.on("pm:create", async (event) => {
-				addElevationToLayer(event.layer);
-			});
-
-			map.on("pm:drawstart", ({ workingLayer }) => {
-				let currentDistance = 0;
-				const tooltip = L.tooltip();
-				workingLayer.bindTooltip(tooltip);
-
-				workingLayer.on("pm:vertexadded", (event) => {
-					const lastPoint = event.latlng;
-					const lineGeoJSON = workingLayer.toGeoJSON();
-					currentDistance = turf.length(lineGeoJSON);
-					workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`);
-					workingLayer.openTooltip(event.latlng);
-
-					map.on("mousemove", (event) => {
-						const currentPoint = event.latlng;
-
-						const newDistance =
-							map.distance(currentPoint, lastPoint) / 1000 + currentDistance;
-						workingLayer.setTooltipContent(`${newDistance.toFixed(1)} km`);
-						workingLayer.openTooltip(event.latlng);
-					});
-				});
-			});
-		},
-		addToMap() {
-			map.pm.addControls(drawingOptions);
-		},
-		addElevationToLayer,
-		allUserRoutes,
-	};
+            const newDistance =
+              map.distance(currentPoint, lastPoint) / METERS_IN_KM +
+              currentDistance;
+            workingLayer.setTooltipContent(`${newDistance.toFixed(1)} km`);
+            workingLayer.openTooltip(event.latlng);
+          });
+        });
+      });
+    },
+    addToMap() {
+      map.pm.addControls(drawingOptions);
+    },
+    addElevationAndReplace,
+    allUserRoutes,
+  };
 }

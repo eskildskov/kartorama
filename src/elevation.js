@@ -1,119 +1,124 @@
-import * as turf from '@turf/turf';
-import {fromArrayBuffer} from 'geotiff';
-import L from 'leaflet';
+/* eslint-disable no-magic-numbers */
 
-export default class Elevation {
-	static async addElevationToLayer(routeLayer) {
-		// Return new layer with elevation
-		const geojson = routeLayer.toGeoJSON();
-		const geojsonWithElevation = await ElevationToGeoJson.addElevationToGeojson(
-			geojson,
-		);
-		return L.geoJSON(geojsonWithElevation);
-	}
+import { lineChunk, lineString, bbox } from "@turf/turf";
+import { coordEach, coordAll } from "@turf/meta";
+import { fromArrayBuffer } from "geotiff";
+import L from "leaflet";
 
-	static sumElevation(lineString) {
-		let elevationGain = 0;
-		let elevationLoss = 0;
-
-		const elevations = turf.coordAll(lineString).map((coord) => coord[2]);
-		let previousElevation = elevations.shift();
-
-		for (const elevation of elevations) {
-			const diff = elevation - previousElevation;
-
-			if (diff > 10) {
-				elevationGain += diff;
-				previousElevation = elevation;
-			} else if (diff < -10) {
-				elevationLoss += diff;
-				previousElevation = elevation;
-			}
-		}
-
-		return {
-			elevationGain: Math.round(elevationGain),
-			elevationLoss: Math.round(-elevationLoss),
-		};
-	}
-
-	static addPointsToLineString(lineString, distance) {
-		const chunkedLineString = turf.lineChunk(lineString, distance);
-		return turf.lineString(turf.coordAll(chunkedLineString));
-	}
+function addPointsToLineString(geojson, distance) {
+  const chunkedLineString = lineChunk(geojson, distance);
+  return lineString(coordAll(chunkedLineString));
 }
 
-class ElevationToGeoJson {
-	constructor(geojson) {
-		this.geojson = geojson;
-		this.url = this.generateWMSUrl(this.geojson);
-	}
-
-	static async addElevationToGeojson(geojson) {
-		const elevation = new ElevationToGeoJson(geojson);
-		await elevation.fetchElevationData();
-		return elevation.addElevationToCoords();
-	}
-
-	async fetchElevationData() {
-		// Return array with the elevation data
-
-		const response = await fetch(this.url);
-		const arrayBuffer = await response.arrayBuffer();
-		this.tiff = await fromArrayBuffer(arrayBuffer);
-		this.image = await this.tiff.getImage();
-
-		this.geoTransform = this.generateGeotransform();
-
-		const rasters = await this.image.readRasters();
-
-		this.dataArray = new Array(this.image.getHeight());
-		for (let j = 0; j < this.image.getHeight(); j++) {
-			this.dataArray[j] = new Array(this.image.getWidth());
-			for (let i = 0; i < this.image.getWidth(); i++) {
-				this.dataArray[j][i] = rasters[0][i + j * this.image.getWidth()];
-			}
-		}
-
-		return this.dataArray;
-	}
-
-	async addElevationToCoords() {
-		turf.coordEach(this.geojson, (coord) => {
-			const elevation = this.elevationAtCoord(coord[0], coord[1]);
-			coord[2] = elevation;
-		});
-		return this.geojson;
-	}
-
-	elevationAtCoord(lon, lat) {
-		const gt = this.geoTransform;
-		let Xpixel = Math.round((lon - gt[0]) / gt[1]);
-		let Ypixel = Math.round((lat - gt[3]) / gt[5]);
-
-		// A small hack when its on max bounds
-		if (Xpixel === this.image.getWidth()) {
-			Xpixel--;
-		}
-
-		if (Ypixel === this.image.getHeight()) {
-			Ypixel--;
-		}
-
-		const elevation = this.dataArray[Ypixel][Xpixel];
-		return elevation;
-	}
-
-	// Height and weight-params should maybe be dynamic??
-	generateWMSUrl() {
-		const bbox = turf.bbox(this.geojson);
-		const bboxString = bbox.join(',');
-		return `https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=GEOTIFF&COLORSCALE=false&CRS=EPSG:4326&WIDTH=700&HEIGHT=700&BBOX=${bboxString}`;
-	}
-
-	generateGeotransform() {
-		const tiepoint = this.image.getTiePoints()[0];
-		const pixelScale = this.image.getFileDirectory().ModelPixelScale;
-		return [tiepoint.x, pixelScale[0], 0, tiepoint.y, 0, -1 * pixelScale[1]];
-	}
+function generateGeotransform(image) {
+  const tiepoint = image.getTiePoints()[0];
+  const pixelScale = image.getFileDirectory().ModelPixelScale;
+  return [tiepoint.x, pixelScale[0], 0, tiepoint.y, 0, -1 * pixelScale[1]];
 }
+
+function generateWMSUrl(geojson) {
+  const WMS_URL =
+    "https://openwms.statkart.no/skwms1/wcs.dtm?&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=land_utm33_10m&FORMAT=GEOTIFF&COLORSCALE=false&CRS=EPSG:4326&WIDTH=700&HEIGHT=700";
+  const boundingbox = bbox(geojson);
+  const boundingBoxString = boundingbox.join(",");
+  return `${WMS_URL}&BBOX=${boundingBoxString}`;
+}
+
+async function fetchImage(url) {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  const tiff = await fromArrayBuffer(arrayBuffer);
+  return tiff.getImage();
+}
+
+async function arrayFromImage(image) {
+  const rasters = await image.readRasters();
+
+  const dataArray = new Array(image.getHeight());
+  for (let heightIndex = 0; heightIndex < image.getHeight(); heightIndex++) {
+    dataArray[heightIndex] = new Array(image.getWidth());
+    for (let widthIndex = 0; widthIndex < image.getWidth(); widthIndex++) {
+      dataArray[heightIndex][widthIndex] =
+        rasters[0][widthIndex + heightIndex * image.getWidth()];
+    }
+  }
+
+  return dataArray;
+}
+
+async function altitudeService(geojson) {
+  const image = await fetchImage(generateWMSUrl(geojson));
+  const dataArray = await arrayFromImage(image);
+  const geotransform = generateGeotransform(image);
+
+  function altitudeAtCoord(lon, lat) {
+    let Xpixel = Math.round((lon - geotransform[0]) / geotransform[1]);
+    let Ypixel = Math.round((lat - geotransform[3]) / geotransform[5]);
+
+    // A small hack when its on max bounds
+    if (Xpixel === image.getWidth()) {
+      Xpixel--;
+    }
+
+    if (Ypixel === image.getHeight()) {
+      Ypixel--;
+    }
+
+    return dataArray[Ypixel][Xpixel];
+  }
+
+  return {
+    altitudeAtCoord,
+  };
+}
+
+async function addAltitudeToGeojson(geojson) {
+  const altitude = await altitudeService(geojson);
+  const geojsonWithAltitude = JSON.parse(JSON.stringify(geojson));
+  coordEach(geojsonWithAltitude, (coord) => {
+    const elevation = altitude.altitudeAtCoord(coord[0], coord[1]);
+    coord[2] = elevation;
+  });
+  return geojsonWithAltitude;
+}
+
+async function addAltitudeToLayer(layer) {
+  const geojson = layer.toGeoJSON();
+  const chunkedGeojson = addPointsToLineString(geojson, 0.05);
+  const geojsonWithAltitude = await addAltitudeToGeojson(chunkedGeojson);
+  return L.geoJSON(geojsonWithAltitude);
+}
+
+// eslint-disable-next-line max-statements
+function sumAltitudes(altitudes, treshold) {
+  let elevationGain = 0;
+  let elevationLoss = 0;
+  let previousAltitude = altitudes.shift();
+
+  for (const currentAltitude of altitudes) {
+    const diff = currentAltitude - previousAltitude;
+
+    if (diff > treshold) {
+      elevationGain += diff;
+      previousAltitude = currentAltitude;
+    }
+
+    if (diff < -treshold) {
+      elevationLoss += diff;
+      previousAltitude = currentAltitude;
+    }
+  }
+
+  return {
+    elevationGain: Math.round(elevationGain),
+    elevationLoss: Math.round(-elevationLoss),
+  };
+}
+
+function getElevationGainAndLoss(geojson) {
+  const ALTITUDE_TRESHOLD = 10;
+  const altitudes = coordAll(geojson).map((coord) => coord[2]);
+  return sumAltitudes(altitudes, ALTITUDE_TRESHOLD);
+}
+
+export { getElevationGainAndLoss, addAltitudeToLayer };
