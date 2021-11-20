@@ -1,3 +1,15 @@
 {
-  "extends": "standard"
+  "env": {
+    "es6": true,
+    "browser": true
+  },
+  "extends": ["hardcore", "plugin:unicorn/recommended", "xo", "prettier"],
+  "rules": {
+    "id-length": "off",
+    "no-inline-comments": "off",
+    "line-comment-position": "off",
+    "no-underscore-dangle": "off",
+    "no-param-reassign": ["error", { "props": false }],
+    "capitalized-comments": "off"
+  }
 }

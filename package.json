@@ -17,6 +17,11 @@
   "devDependencies": {
     "@babel/core": "^7.12.0",
     "cssnano": "^5.0.10",
+    "eslint": "^8.2.0",
+    "eslint-config-hardcore": "^23.2.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-xo": "^0.39.0",
+    "eslint-plugin-unicorn": "^38.0.1",
     "node-fetch": "^3.1.0",
     "postcss": "^8.3.1",
     "postcss-preset-env": "^6.7.0",
@@ -25,8 +30,7 @@
     "sass": "^1.43.4",
     "sass-loader": "^12.1.0",
     "vue-loader": "^15.9.7",
-    "vue-template-compiler": "^2.6.14",
-    "xo": "^0.46.4"
+    "vue-template-compiler": "^2.6.14"
   },
   "dependencies": {
     "@babel/runtime": "^7.16.0",
@@ -37,6 +41,7 @@
     "@supabase/supabase-js": "^1.27.0",
     "@tmcw/togeojson": "^3.2.0",
     "@turf/helpers": "^6.5.0",
+    "@turf/meta": "^6.5.0",
     "@turf/turf": "^6.5.0",
     "esri-leaflet": "^3.0.3",
     "geotiff": "^1.0.8",
