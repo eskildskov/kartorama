@@ -28,7 +28,7 @@ L.Control.SaveRoute = L.Control.extend({
   onAdd(map) {
     this._isLoading = false;
     this._map = map;
-    this._routeHandler = RouteHandler(this._map);
+    this._routeHandler = new RouteHandler(this._map);
     const routeId = this.getRouteIdFromUrl();
 
     if (routeId) {
