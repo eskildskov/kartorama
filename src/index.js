@@ -63,17 +63,25 @@ function savePosition() {
   localStorage.setItem("currentCenter", JSON.stringify(map.getCenter()));
 }
 
+map.on("moveend", savePosition);
+
 function saveZoom() {
   localStorage.setItem("currentZoom", map.getZoom());
 }
+
+map.on("zoomend", saveZoom);
 
 function saveActiveBaseLayer(event) {
   localStorage.setItem("activeBaseLayerName", event.name);
 }
 
+map.on("baselayerchange", saveActiveBaseLayer);
+
 function saveActiveOverlay(event) {
   localStorage.setItem("activeOverlayName", event.name);
 }
+
+map.on("overlayadd", saveActiveOverlay);
 
 function changeOverlayControl(event) {
   map.state.overlay = event.layer;
@@ -86,11 +94,7 @@ function changeOverlayControl(event) {
   }
 }
 
-map.on("baselayerchange", saveActiveBaseLayer);
-map.on("overlayadd", saveActiveOverlay);
 map.on("overlayadd", changeOverlayControl);
-map.on("moveend", savePosition);
-map.on("zoomend", saveZoom);
 
 fileControl.loader.on("data:error", (error) => {
   alert(error);
