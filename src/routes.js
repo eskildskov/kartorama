@@ -1,4 +1,3 @@
-/* eslint-disable max-statements */
 import "@geoman-io/leaflet-geoman-free";
 import "@raruto/leaflet-elevation";
 import L from "leaflet";
@@ -7,6 +6,17 @@ import { length } from "@turf/turf";
 import { addAltitudeToLayer, getElevationGainAndLoss } from "./elevation.js";
 
 const pathOptions = { className: "route" };
+
+const pmOptions = {
+  tooltips: false,
+  allowSelfIntersection: true,
+  markerStyle: { draggable: false },
+  // eslint-disable-next-line unicorn/no-null
+  finishOn: null,
+  templineStyle: { className: "route is-drawing" },
+  hintlineStyle: { className: "route is-drawing" },
+  pathOptions,
+};
 
 const elevationOptions = {
   theme: "kartorama-theme",
@@ -72,6 +82,7 @@ function addTooltipToRouteLayer(layer) {
 
   layer.bindPopup(popupElement).openPopup();
 }
+
 function getElevationLine(routeLayer) {
   return routeLayer.controlElevationProfile._layers._layers;
 }
@@ -127,18 +138,17 @@ export default function RouteHandler(map) {
   }
 
   function initElevationLayer(layer) {
-    layer.setStyle(pathOptions);
-    map.addLayer(layer);
-
     const geojsonWithElevation = layer.toGeoJSON();
     layer.controlElevationProfile = L.control.elevation(elevationOptions);
     layer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation);
     addTooltipToRouteLayer(layer);
-    map.routeLayers.addLayer(layer);
 
-    map.off("mousemove");
+    // map.off("mousemove");
     map.fitBounds(layer.getBounds());
 
+    layer.setStyle(pathOptions);
+    map.addLayer(layer);
+    map.routeLayers.addLayer(layer);
     setActiveRoute(layer);
 
     layer.on("click", (event) => {
@@ -152,6 +162,36 @@ export default function RouteHandler(map) {
     initElevationLayer(layerWithElevation);
   }
 
+  function distanceInKm(latlng1, latlng2) {
+    const METERS_IN_KM = 1000;
+
+    return map.distance(latlng1, latlng2) / METERS_IN_KM;
+  }
+
+  function initDrawingTooltip() {
+    map.on("pm:drawstart", ({ workingLayer }) => {
+      let totalDistance = 0;
+      const tooltip = L.tooltip();
+      workingLayer.bindTooltip(tooltip);
+
+      workingLayer.on("pm:vertexadded", (event) => {
+        const lastLatlng = event.latlng;
+        const lineGeoJSON = workingLayer.toGeoJSON();
+        totalDistance = length(lineGeoJSON);
+        workingLayer.setTooltipContent(`${totalDistance.toFixed(1)} km`);
+        workingLayer.openTooltip(event.latlng);
+
+        map.on("mousemove", (event) => {
+          const currentLatlng = event.latlng;
+          const currentDistance =
+            distanceInKm(lastLatlng, currentLatlng) + totalDistance;
+          workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`);
+          workingLayer.openTooltip(event.latlng);
+        });
+      });
+    });
+  }
+
   return {
     init() {
       map.on("click", () => {
@@ -162,50 +202,20 @@ export default function RouteHandler(map) {
 
       map.routeLayers = L.layerGroup();
 
-      map.pm.setGlobalOptions({
-        tooltips: false,
-        allowSelfIntersection: true,
-        markerStyle: { draggable: false },
-        // eslint-disable-next-line unicorn/no-null
-        finishOn: null,
-        templineStyle: { className: "route is-drawing" },
-        hintlineStyle: { className: "route is-drawing" },
-        pathOptions,
-      });
+      map.pm.setGlobalOptions(pmOptions);
       map.pm.setLang("no");
 
       map.on("pm:create", (event) => {
         addElevationAndReplace(event.layer);
       });
 
-      map.on("pm:drawstart", ({ workingLayer }) => {
-        let currentDistance = 0;
-        const tooltip = L.tooltip();
-        workingLayer.bindTooltip(tooltip);
-
-        workingLayer.on("pm:vertexadded", (event) => {
-          const lastPoint = event.latlng;
-          const lineGeoJSON = workingLayer.toGeoJSON();
-          currentDistance = length(lineGeoJSON);
-          workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`);
-          workingLayer.openTooltip(event.latlng);
-
-          map.on("mousemove", (event) => {
-            const METERS_IN_KM = 1000;
-            const currentPoint = event.latlng;
-
-            const newDistance =
-              map.distance(currentPoint, lastPoint) / METERS_IN_KM +
-              currentDistance;
-            workingLayer.setTooltipContent(`${newDistance.toFixed(1)} km`);
-            workingLayer.openTooltip(event.latlng);
-          });
-        });
-      });
+      initDrawingTooltip();
     },
+
     addToMap() {
       map.pm.addControls(drawingOptions);
     },
+
     addElevationAndReplace,
     allUserRoutes,
   };

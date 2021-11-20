@@ -1,6 +1,7 @@
+/* eslint-disable no-alert */
 import L from "leaflet";
 import "./vendor/leaflet-slider/leaflet-slider.js";
-import { createClient } from "@supabase/supabase-js";
+
 import {
   scaleControl,
   zoomControl,
@@ -74,12 +75,6 @@ function saveActiveOverlay(event) {
   localStorage.setItem("activeOverlayName", event.name);
 }
 
-map.on("baselayerchange", saveActiveBaseLayer);
-map.on("overlayadd", saveActiveOverlay);
-map.on("overlayadd", changeOverlayControl);
-map.on("moveend", savePosition);
-map.on("zoomend", saveZoom);
-
 function changeOverlayControl(event) {
   map.state.overlay = event.layer;
   if (map.opacitySlider.slider.valueAsNumber === 0) {
@@ -91,10 +86,16 @@ function changeOverlayControl(event) {
   }
 }
 
-fileControl.loader.on("data:error", function (error) {
+map.on("baselayerchange", saveActiveBaseLayer);
+map.on("overlayadd", saveActiveOverlay);
+map.on("overlayadd", changeOverlayControl);
+map.on("moveend", savePosition);
+map.on("zoomend", saveZoom);
+
+fileControl.loader.on("data:error", (error) => {
   alert(error);
 });
 
-fileControl.loader.on("data:loaded", function (event) {
-  routeHandler.addElevationToLayer(event.layer);
+fileControl.loader.on("data:loaded", (event) => {
+  routeHandler.addElevationAndReplace(event.layer);
 });

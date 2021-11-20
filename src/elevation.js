@@ -11,7 +11,7 @@ function addPointsToLineString(geojson, distance) {
 }
 
 function generateGeotransform(image) {
-  const tiepoint = image.getTiePoints()[0];
+  const [tiepoint] = image.getTiePoints();
   const pixelScale = image.getFileDirectory().ModelPixelScale;
   return [tiepoint.x, pixelScale[0], 0, tiepoint.y, 0, -1 * pixelScale[1]];
 }
@@ -33,10 +33,11 @@ async function fetchImage(url) {
 
 async function arrayFromImage(image) {
   const rasters = await image.readRasters();
+  const dataArray = [];
 
-  const dataArray = new Array(image.getHeight());
   for (let heightIndex = 0; heightIndex < image.getHeight(); heightIndex++) {
-    dataArray[heightIndex] = new Array(image.getWidth());
+    dataArray[heightIndex] = [];
+
     for (let widthIndex = 0; widthIndex < image.getWidth(); widthIndex++) {
       dataArray[heightIndex][widthIndex] =
         rasters[0][widthIndex + heightIndex * image.getWidth()];
@@ -55,13 +56,12 @@ async function altitudeService(geojson) {
     let Xpixel = Math.round((lon - geotransform[0]) / geotransform[1]);
     let Ypixel = Math.round((lat - geotransform[3]) / geotransform[5]);
 
-    // A small hack when its on max bounds
     if (Xpixel === image.getWidth()) {
-      Xpixel--;
+      Xpixel -= 1;
     }
 
     if (Ypixel === image.getHeight()) {
-      Ypixel--;
+      Ypixel -= 1;
     }
 
     return dataArray[Ypixel][Xpixel];
@@ -75,10 +75,12 @@ async function altitudeService(geojson) {
 async function addAltitudeToGeojson(geojson) {
   const altitude = await altitudeService(geojson);
   const geojsonWithAltitude = JSON.parse(JSON.stringify(geojson));
+
   coordEach(geojsonWithAltitude, (coord) => {
     const elevation = altitude.altitudeAtCoord(coord[0], coord[1]);
     coord[2] = elevation;
   });
+
   return geojsonWithAltitude;
 }
 
@@ -89,7 +91,6 @@ async function addAltitudeToLayer(layer) {
   return L.geoJSON(geojsonWithAltitude);
 }
 
-// eslint-disable-next-line max-statements
 function sumAltitudes(altitudes, treshold) {
   let elevationGain = 0;
   let elevationLoss = 0;
