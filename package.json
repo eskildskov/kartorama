@@ -5,8 +5,8 @@
   "main": "src/export.js",
   "scripts": {
     "dev": "vite src",
-    "build": "vite build src --outDir ../dist --emptyOutDir --sourcemap true --minify false",
-    "preview": "vite preview --root ../src"
+    "build": "vite build --emptyOutDir --sourcemap true",
+    "preview": "vite preview"
   },
   "engines": {
     "node": "17.x"
