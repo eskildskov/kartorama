@@ -1,5 +1,4 @@
-import L from "leaflet";
-
+/* eslint-disable import/no-unused-modules */
 import {
   initFileLoaderControl,
   initScaleControl,
@@ -9,20 +8,31 @@ import {
   initLayerControl,
   initMap,
 } from "./controls.js";
-import RouteHandler from "./routes.js";
-import "./save-route.js";
+import { RouteHandler, allUserRoutes } from "./routes.js";
+import { initSaveRouteControl } from "./save-route.js";
 
-const map = L.map("map", { zoomControl: false, pmIgnore: false });
-
-initMap(map);
+const map = initMap();
 const routeHandler = new RouteHandler(map);
-routeHandler.init();
 
 initScaleControl(map);
 initZoomControl(map);
 initOpacityControl(map);
 initLayerControl(map);
-routeHandler.addToMap();
+routeHandler.init(map);
 initFileLoaderControl(map);
 initLocateControl(map);
-L.Control.saveRoute().addTo(map);
+initSaveRouteControl(map);
+
+export {
+  initScaleControl,
+  initZoomControl,
+  initOpacityControl,
+  initLayerControl,
+  initLocateControl,
+  initFileLoaderControl,
+  initMap,
+} from "./controls.js";
+
+export { RouteHandler, allUserRoutes } from "./routes.js";
+
+export { initSaveRouteControl } from "./save-route.js";

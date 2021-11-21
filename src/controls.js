@@ -8,13 +8,15 @@ import "./vendor/leaflet.filelayer.js";
 import "leaflet-groupedlayercontrol";
 import "leaflet.locatecontrol";
 import { overlayMaps, baseMaps, groupedOverlays } from "./layers.js";
-import RouteHandler from "./routes.js";
+import { RouteHandler } from "./routes.js";
 
 // eslint-disable-next-line no-magic-numbers
 const URKE_COORDINATES = [62.213_447_329_334_01, 6.566_903_178_568_401];
 const DEFAULT_ZOOM_LEVEL = 10;
 
-function initMap(map) {
+function initMap() {
+  const map = L.map("map", { zoomControl: false, pmIgnore: false });
+
   L.PM.setOptIn(true);
 
   map.state = {};
@@ -26,6 +28,8 @@ function initMap(map) {
   const zoom = window.localStorage.getItem("currentZoom") || DEFAULT_ZOOM_LEVEL;
 
   map.setView(center, zoom);
+
+  return map;
 }
 
 function initZoomControl(map) {

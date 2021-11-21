@@ -98,7 +98,17 @@ function hideElevationProfile(layer) {
   layer.controlElevationProfile._container.style.display = "none";
 }
 
-export default function RouteHandler(map) {
+function allUserRoutes(map) {
+  let geojsons = [];
+  map.routeLayers.eachLayer((routeLayer) => {
+    const geojson = routeLayer.toGeoJSON();
+    geojsons = [...geojsons, ...geojson.features];
+  });
+
+  return geojsons;
+}
+
+function RouteHandler(map) {
   function showElevationProfile(layer) {
     layer.controlElevationProfile._container.style.display = "block";
     layer.controlElevationProfile.addTo(map);
@@ -109,16 +119,6 @@ export default function RouteHandler(map) {
     if (Object.keys(elevationLine).length > 0) {
       Object.values(elevationLine)[0].addTo(map);
     }
-  }
-
-  function allUserRoutes() {
-    let geojsons = [];
-    map.routeLayers.eachLayer((routeLayer) => {
-      const geojson = routeLayer.toGeoJSON();
-      geojsons = [...geojsons, ...geojson.features];
-    });
-
-    return geojsons;
   }
 
   function deactivateRoute(routeLayer) {
@@ -156,12 +156,6 @@ export default function RouteHandler(map) {
     });
   }
 
-  async function addElevationAndReplace(layer) {
-    const layerWithElevation = await addAltitudeToLayer(layer);
-    map.removeLayer(layer);
-    initElevationLayer(layerWithElevation);
-  }
-
   function distanceInKm(latlng1, latlng2) {
     const METERS_IN_KM = 1000;
 
@@ -192,6 +186,12 @@ export default function RouteHandler(map) {
     });
   }
 
+  async function addElevationAndReplace(layer) {
+    const layerWithElevation = await addAltitudeToLayer(layer);
+    map.removeLayer(layer);
+    initElevationLayer(layerWithElevation);
+  }
+
   return {
     init() {
       map.on("click", () => {
@@ -204,6 +204,7 @@ export default function RouteHandler(map) {
 
       map.pm.setGlobalOptions(pmOptions);
       map.pm.setLang("no");
+      map.pm.addControls(drawingOptions);
 
       map.on("pm:create", (event) => {
         addElevationAndReplace(event.layer);
@@ -212,11 +213,8 @@ export default function RouteHandler(map) {
       initDrawingTooltip();
     },
 
-    addToMap() {
-      map.pm.addControls(drawingOptions);
-    },
-
     addElevationAndReplace,
-    allUserRoutes,
   };
 }
+
+export { RouteHandler, allUserRoutes };
