@@ -2,7 +2,7 @@
   "name": "kartorama",
   "version": "1.0.0",
   "description": "Kart",
-  "main": "src/index.js",
+  "main": "src/export.js",
   "scripts": {
     "dev": "vite src",
     "build": "vite build src --outDir ../dist --emptyOutDir --sourcemap true --minify false",
