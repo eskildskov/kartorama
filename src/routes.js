@@ -208,6 +208,7 @@ function RouteHandler(map) {
 
       map.on("pm:create", (event) => {
         addElevationAndReplace(event.layer);
+        console.log(event.layer.toGeoJSON());
       });
 
       initDrawingTooltip();
