@@ -207,8 +207,8 @@ function RouteHandler(map) {
       map.pm.addControls(drawingOptions);
 
       map.on("pm:create", (event) => {
-        addElevationAndReplace(event.layer);
         console.log(JSON.stringify(event.layer.toGeoJSON()));
+        addElevationAndReplace(event.layer);
       });
 
       initDrawingTooltip();
