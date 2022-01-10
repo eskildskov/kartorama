@@ -80,7 +80,7 @@ function addTooltipToRouteLayer(layer) {
     layer
   );
 
-  layer.bindPopup(popupElement).openPopup();
+  layer.bindPopup(popupElement);
 }
 
 function getElevationLine(routeLayer) {
@@ -106,6 +106,11 @@ function allUserRoutes(map) {
   });
 
   return geojsons;
+}
+
+function getLastUserRoute(map) {
+  const layers = map.routeLayers.getLayers();
+  return layers.pop().toGeoJSON();
 }
 
 function RouteHandler(map) {
@@ -134,6 +139,7 @@ function RouteHandler(map) {
 
     activateElevationLine(routeLayer);
     showElevationProfile(routeLayer);
+    routeLayer.openPopup();
     map.state.activeRouteLayer = routeLayer;
   }
 
@@ -218,4 +224,4 @@ function RouteHandler(map) {
   };
 }
 
-export { RouteHandler, allUserRoutes };
+export { RouteHandler, getLastUserRoute };

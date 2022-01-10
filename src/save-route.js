@@ -2,7 +2,7 @@
 import L from "leaflet";
 import { createClient } from "@supabase/supabase-js";
 
-import { RouteHandler, allUserRoutes } from "./routes.js";
+import { RouteHandler, getLastUserRoute } from "./routes.js";
 
 function createButton(container) {
   const button = L.DomUtil.create(
@@ -55,11 +55,8 @@ L.Control.SaveRoute = L.Control.extend({
 
   _saveRoute() {
     L.DomUtil.addClass(this._button, "loading");
-    const geojson = allUserRoutes(this._map);
-
-    if (geojson.length > 0) {
-      this._postRoute(geojson);
-    }
+    const geojson = getLastUserRoute(this._map);
+    this._postRoute(geojson);
   },
 
   generatePath(routeId) {
@@ -113,11 +110,9 @@ L.Control.SaveRoute = L.Control.extend({
       // eslint-disable-next-line no-magic-numbers
       if (error && status !== 406) throw error;
 
-      if (data) {
-        for (const feature of data.geojson) {
-          const layer = L.geoJSON(feature).addTo(this._map);
-          this._routeHandler.addElevationAndReplace(layer);
-        }
+      if (data.geojson) {
+        const layer = L.geoJSON(data.geojson);
+        this._routeHandler.addElevationAndReplace(layer);
       }
     } catch (error) {
       alert(error.message);
