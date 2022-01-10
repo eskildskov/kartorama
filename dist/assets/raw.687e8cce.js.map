@@ -1,1 +1,0 @@
-{"version":3,"file":"raw.687e8cce.js","sources":["../../node_modules/.pnpm/geotiff@1.0.8/node_modules/geotiff/src/compression/raw.js"],"sourcesContent":["import BaseDecoder from './basedecoder';\n\nexport default class RawDecoder extends BaseDecoder {\n  decodeBlock(buffer) {\n    return buffer;\n  }\n}\n"],"names":[],"mappings":"8CAEe,eAAyB,EAAY,CAClD,YAAY,EAAQ,CAClB,MAAO"}
