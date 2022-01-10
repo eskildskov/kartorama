@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 import { defineConfig } from "vite";
-import { dependencies } from "./package.json";
 
 const vendors = [
   "leaflet",
@@ -23,7 +22,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: vendors,
-          // ...renderChunks(dependencies),
         },
       },
     },
