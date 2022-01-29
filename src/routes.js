@@ -171,23 +171,32 @@ function RouteHandler(map) {
   function initDrawingTooltip() {
     map.on("pm:drawstart", ({ workingLayer }) => {
       let totalDistance = 0;
+      // eslint-disable-next-line init-declarations
+      let lastLatlng;
       const tooltip = L.tooltip();
       workingLayer.bindTooltip(tooltip);
 
       workingLayer.on("pm:vertexadded", (event) => {
-        const lastLatlng = event.latlng;
-        const lineGeoJSON = workingLayer.toGeoJSON();
-        totalDistance = length(lineGeoJSON);
-        workingLayer.setTooltipContent(`${totalDistance.toFixed(1)} km`);
-        workingLayer.openTooltip(event.latlng);
-
-        map.on("mousemove", (event) => {
-          const currentLatlng = event.latlng;
-          const currentDistance =
-            distanceInKm(lastLatlng, currentLatlng) + totalDistance;
-          workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`);
+        const currentLatlng = event.latlng;
+        if (lastLatlng) {
+          totalDistance += distanceInKm(lastLatlng, currentLatlng);
+          workingLayer.setTooltipContent(`${totalDistance.toFixed(1)} km`);
           workingLayer.openTooltip(event.latlng);
-        });
+        }
+
+        lastLatlng = currentLatlng;
+      });
+
+      map.on("mousemove", (event) => {
+        if (!lastLatlng) {
+          return;
+        }
+
+        const currentLatlng = event.latlng;
+        const currentDistance =
+          distanceInKm(lastLatlng, currentLatlng) + totalDistance;
+        workingLayer.setTooltipContent(`${currentDistance.toFixed(1)} km`);
+        workingLayer.openTooltip(event.latlng);
       });
     });
   }
@@ -213,6 +222,7 @@ function RouteHandler(map) {
       map.pm.addControls(drawingOptions);
 
       map.on("pm:create", (event) => {
+        // eslint-disable-next-line no-console
         console.log(JSON.stringify(event.layer.toGeoJSON()));
         addElevationAndReplace(event.layer);
       });
