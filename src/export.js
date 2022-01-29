@@ -6,6 +6,7 @@ export {
   initLayerControl,
   initLocateControl,
   initFileLoaderControl,
+  initLegendControl,
   initMap,
 } from "./controls.js";
 

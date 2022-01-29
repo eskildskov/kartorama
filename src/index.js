@@ -6,6 +6,7 @@ import {
   initZoomControl,
   initLocateControl,
   initLayerControl,
+  initLegendControl,
   initMap,
 } from "./controls.js";
 import { RouteHandler } from "./routes.js";

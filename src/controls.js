@@ -2,13 +2,13 @@
 /* eslint-disable no-alert */
 /* eslint-disable unicorn/consistent-function-scoping */
 import L from "leaflet";
-
-import "./vendor/leaflet-slider/leaflet-slider.js";
-import "./vendor/leaflet.filelayer.js";
 import "leaflet-groupedlayercontrol";
 import "leaflet.locatecontrol";
-import { overlayMaps, baseMaps, groupedOverlays } from "./layers.js";
+import { baseMaps, groupedOverlays, overlayMaps } from "./layers.js";
 import { RouteHandler } from "./routes.js";
+import "./vendor/leaflet-slider/leaflet-slider.js";
+import "./vendor/leaflet.filelayer.js";
+import "./vendor/leaflet.legend.js";
 
 // eslint-disable-next-line no-magic-numbers
 const URKE_COORDINATES = [62.213_447_329_334_01, 6.566_903_178_568_401];
@@ -167,7 +167,68 @@ function initOpacityControl(map) {
   map.on("overlayadd", setOpacity);
 }
 
+function initLegendControl(map) {
+  L.control
+    .legend({
+      title: "Forklaring",
+      position: "bottomleft",
+      collapsed: true,
+      symbolWidth: 24,
+      opacity: 1,
+      column: 1,
+
+      legends: [
+        {
+          label: "27-30°",
+          type: "polygon",
+          sides: 4,
+          fillColor: "#1f6402",
+          color: "#000",
+          weight: 1,
+        },
+        {
+          label: "30-35°",
+          type: "polygon",
+          sides: 4,
+          fillColor: "#ffff0b",
+        },
+        {
+          label: "35-40°",
+          type: "polygon",
+          sides: 4,
+          fillColor: "#fd9909",
+        },
+        {
+          label: "40-45°",
+          type: "polygon",
+          sides: 4,
+          fillColor: "#fb3d08",
+        },
+        {
+          label: "45-50°",
+          type: "polygon",
+          sides: 4,
+          fillColor: "#fb0007",
+        },
+        {
+          label: "Korte utløp (α = 32°)",
+          type: "polygon",
+          sides: 4,
+          fillColor: "#053897",
+        },
+        {
+          label: "Middels utløp (α = 27°)",
+          type: "polygon",
+          sides: 4,
+          fillColor: "#0953fe",
+        },
+      ],
+    })
+    .addTo(map);
+}
+
 export {
+  initLegendControl,
   initFileLoaderControl,
   initZoomControl,
   initLayerControl,

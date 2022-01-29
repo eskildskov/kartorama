@@ -1,0 +1,83 @@
+.leaflet-legend {
+  background-color: white;
+}
+
+.leaflet-legend-title {
+  margin: 3px 3px 0 3px;
+  /* padding-bottom: 5px; */
+}
+
+.leaflet-legend-column {
+  float: left;
+  /* margin-left: 10px; */
+}
+
+.leaflet-legend-item {
+  display: table;
+  margin: 2px 0;
+}
+
+.leaflet-legend-item span {
+  vertical-align: middle;
+  display: table-cell;
+  word-break: keep-all;
+  white-space: nowrap;
+  background-color: transparent;
+  text-align: left;
+}
+
+.leaflet-legend-item-clickable {
+  cursor: pointer;
+}
+
+.leaflet-legend-item-inactive span {
+  color: #cccccc;
+}
+
+.leaflet-legend-item-inactive i img,
+.leaflet-legend-item-inactive i canvas {
+  opacity: 0.3;
+  /*
+  color: #000000;
+  -webkit-filter: grayscale(100%);
+  -moz-filter: grayscale(100%);
+  -ms-filter: grayscale(100%);
+  -o-filter: grayscale(100%);
+  filter: grayscale(100%);
+  filter: gray;
+  */
+}
+
+.leaflet-legend-item i {
+  display: inline-block;
+  /* padding: 0px 3px 0px 4px; */
+  position: relative;
+  vertical-align: middle;
+}
+
+.leaflet-legend-toggle {
+  background-image: url('data:image/svg+xml,%3Csvg xmlns="http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" width="1.2em" height="1.2em" preserveAspectRatio="xMidYMid meet" viewBox="0 0 512 512"%3E%3Cpath d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758c-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122c17.864-22.658 30.113-35.797 57.303-35.797c20.429 0 45.698 13.148 45.698 32.958c0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667c0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46c0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z" fill="currentColor"%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  box-shadow: none;
+  border-radius: 4px;
+}
+
+.leaflet-legend-contents {
+  display: none;
+}
+
+.leaflet-legend-expanded .leaflet-legend-contents {
+  display: block;
+  padding: 6px 15px 6px 6px;
+}
+
+.leaflet-legend-contents img {
+  position: absolute;
+}
+
+.leaflet-legend-contents:after {
+  content: "";
+  display: block;
+  clear: both;
+}
