@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unused-modules */
 export {
   initScaleControl,
   initZoomControl,
@@ -10,6 +9,6 @@ export {
   initMap,
 } from "./controls.js";
 
-export { RouteHandler, allUserRoutes } from "./routes.js";
+export { RouteHandler, getLastUserRoute } from "./routes.js";
 
 export { initSaveRouteControl } from "./save-route.js";

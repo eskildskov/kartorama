@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unused-modules */
 import {
   initFileLoaderControl,
   initScaleControl,
@@ -23,3 +22,4 @@ routeHandler.init(map);
 initFileLoaderControl(map);
 initLocateControl(map);
 initSaveRouteControl(map);
+initLegendControl(map);
