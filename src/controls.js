@@ -2,6 +2,7 @@
 /* eslint-disable no-alert */
 /* eslint-disable unicorn/consistent-function-scoping */
 import L from "leaflet";
+
 import "leaflet-groupedlayercontrol";
 import "leaflet.locatecontrol";
 import { baseMaps, groupedOverlays, overlayMaps } from "./layers.js";
@@ -133,6 +134,7 @@ function initOpacityControl(map) {
   const opacitySlider = L.control.slider(
     (value) => {
       map.state.overlay.setOpacity(value);
+      window.localStorage.setItem("currentOpacity", value);
     },
     {
       min: 0,
@@ -148,10 +150,6 @@ function initOpacityControl(map) {
   );
 
   opacitySlider.addTo(map);
-
-  opacitySlider.slider.addEventListener("click", () => {
-    localStorage.setItem("currentOpacity", opacitySlider.slider.valueAsNumber);
-  });
 
   function setOpacity(event) {
     map.state.overlay = event.layer;
