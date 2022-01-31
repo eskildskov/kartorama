@@ -12,6 +12,7 @@ import { RouteHandler } from "./routes.js";
 import { initSaveRouteControl } from "./save-route.js";
 
 const map = initMap();
+window.map = map;
 const routeHandler = new RouteHandler(map);
 
 initScaleControl(map);

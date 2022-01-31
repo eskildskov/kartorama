@@ -25,6 +25,27 @@ L.Control.SaveRoute = L.Control.extend({
     L.Util.setOptions(this, options);
   },
 
+  initContainer() {
+    const container = L.DomUtil.create(
+      "div",
+      "leaflet-control-save-route leaflet-bar"
+    );
+
+    this._button = createButton(container);
+
+    L.DomEvent.on(this._button, "dblclick", L.DomEvent.stop, this)
+      .on(this._button, "click", L.DomEvent.stop, this)
+      .on(this._button, "click", this._saveRoute, this);
+
+    return container;
+  },
+
+  loadGeojsonString(geojsonString) {
+    const geojson = JSON.parse(geojsonString);
+    const layer = L.geoJSON(geojson);
+    this._routeHandler.addElevationAndReplace(layer);
+  },
+
   onAdd(map) {
     this._isLoading = false;
     this._map = map;
@@ -35,15 +56,11 @@ L.Control.SaveRoute = L.Control.extend({
       this.loadRoute(routeId);
     }
 
-    const container = L.DomUtil.create(
-      "div",
-      "leaflet-control-save-route leaflet-bar"
-    );
-    this._button = createButton(container);
-    L.DomEvent.on(this._button, "dblclick", L.DomEvent.stop, this)
-      .on(this._button, "click", L.DomEvent.stop, this)
-      .on(this._button, "click", this._saveRoute, this);
-    return container;
+    map.loadGeojsonString = (geojsonString) => {
+      this.loadGeojsonString(geojsonString);
+    };
+
+    return this.initContainer();
   },
 
   onRemove() {
