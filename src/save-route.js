@@ -56,9 +56,7 @@ L.Control.SaveRoute = L.Control.extend({
       this.loadRoute(routeId);
     }
 
-    map.loadGeojsonString = (geojsonString) => {
-      this.loadGeojsonString(geojsonString);
-    };
+    map.loadGeojsonString = this.loadGeojsonString.bind(this);
 
     return this.initContainer();
   },
