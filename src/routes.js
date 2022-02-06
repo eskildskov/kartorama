@@ -54,15 +54,15 @@ function generateTooltip(data, layer) {
   const popupElement = document.createElement("p");
   popupElement.innerHTML = `Distanse: ${data.distance} km. Opp: ${data.elevationGain} m. Ned: ${data.elevationLoss} m. `;
 
-  // const removeLayerLink = document.createElement("a");
-  // removeLayerLink.textContent = "Slett spor";
-  // removeLayerLink.href = "#";
-  // removeLayerLink.addEventListener("click", () => {
-  //   deactivateRoute(layer);
-  //   layer.remove();
-  // });
+  const removeLayerLink = document.createElement("a");
+  removeLayerLink.textContent = "Slett spor";
+  removeLayerLink.href = "#";
+  removeLayerLink.addEventListener("click", () => {
+    // deactivateRoute(layer);
+    layer.remove();
+  });
 
-  // PopupElement.append(removeLayerLink);
+  popupElement.append(removeLayerLink);
 
   return popupElement;
 }
@@ -98,15 +98,15 @@ function hideElevationProfile(layer) {
   layer.controlElevationProfile._container.style.display = "none";
 }
 
-function allUserRoutes(map) {
-  let geojsons = [];
-  map.routeLayers.eachLayer((routeLayer) => {
-    const geojson = routeLayer.toGeoJSON();
-    geojsons = [...geojsons, ...geojson.features];
-  });
+// function allUserRoutes(map) {
+//   let geojsons = [];
+//   map.routeLayers.eachLayer((routeLayer) => {
+//     const geojson = routeLayer.toGeoJSON();
+//     geojsons = [...geojsons, ...geojson.features];
+//   });
 
-  return geojsons;
-}
+//   return geojsons;
+// }
 
 function getLastUserRoute(map) {
   const layers = map.routeLayers.getLayers();

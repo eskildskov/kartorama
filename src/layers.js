@@ -1,13 +1,13 @@
+/* eslint-disable no-magic-numbers */
 import L from "leaflet";
 import { dynamicMapLayer } from "esri-leaflet";
 
 const attributionKartverket =
   '<a href="http://www.kartverket.no/">Kartverket</a>';
 const subdomainsKartverket = ["opencache", "opencache2", "opencache3"];
-
 const attributionNVE = '<a href="https://www.nve.no/">NVE</a>';
 
-const rasterBaseMap = L.tileLayer(
+const Papirkart = L.tileLayer(
   "https://{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=toporaster4&zoom={z}&x={x}&y={y}",
   {
     attribution: attributionKartverket,
@@ -15,7 +15,7 @@ const rasterBaseMap = L.tileLayer(
   }
 );
 
-const vectorBaseMap = L.tileLayer(
+const Vektorkart = L.tileLayer(
   "https://{s}.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}",
   {
     attribution: attributionKartverket,
@@ -23,7 +23,7 @@ const vectorBaseMap = L.tileLayer(
   }
 );
 
-const kastOverlayMap = dynamicMapLayer(
+const Utløp = dynamicMapLayer(
   {
     url: "https://gis2.nve.no/arcgis/rest/services/wmts/KastWMTS/MapServer",
     layers: [0, 1, 2, 3],
@@ -33,7 +33,7 @@ const kastOverlayMap = dynamicMapLayer(
   }
 );
 
-const steepnessOverlayMap = L.tileLayer.wms(
+const Helning = L.tileLayer.wms(
   "https://gis3.nve.no/map/services/Bratthet/MapServer/WmsServer?",
   {
     layers: "Bratthet_snoskred",
@@ -44,13 +44,13 @@ const steepnessOverlayMap = L.tileLayer.wms(
 );
 
 const baseMaps = {
-  Vektorkart: vectorBaseMap,
-  Papirkart: rasterBaseMap,
+  Vektorkart,
+  Papirkart,
 };
 
 const overlayMaps = {
-  Helning: steepnessOverlayMap,
-  Utløp: kastOverlayMap,
+  Helning,
+  Utløp,
 };
 
 const groupedOverlays = {

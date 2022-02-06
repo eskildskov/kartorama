@@ -35,10 +35,10 @@ async function arrayFromImage(image) {
   const rasters = await image.readRasters();
   const dataArray = [];
 
-  for (let heightIndex = 0; heightIndex < image.getHeight(); heightIndex++) {
+  for (let heightIndex = 0; heightIndex < image.getHeight(); heightIndex += 1) {
     dataArray[heightIndex] = [];
 
-    for (let widthIndex = 0; widthIndex < image.getWidth(); widthIndex++) {
+    for (let widthIndex = 0; widthIndex < image.getWidth(); widthIndex += 1) {
       dataArray[heightIndex][widthIndex] =
         rasters[0][widthIndex + heightIndex * image.getWidth()];
     }
