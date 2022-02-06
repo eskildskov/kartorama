@@ -52,12 +52,14 @@ function initScaleControl(map) {
 }
 
 function initLayers(map) {
+  const storedBaseLayer = window.localStorage.getItem("activeBaseLayerName");
   const activeBaseLayerName =
-    window.localStorage.getItem("activeBaseLayerName") || "Vektorkart";
+    storedBaseLayer in baseMaps ? storedBaseLayer : "Vektorkart";
   map.addLayer(baseMaps[activeBaseLayerName]);
 
+  const storedOverlay = window.localStorage.getItem("activeOverlayName");
   const activeOverlayName =
-    window.localStorage.getItem("activeOverlayName") || "Helning";
+    storedOverlay in overlayMaps ? storedOverlay : "Helning";
   map.addLayer(overlayMaps[activeOverlayName]);
 
   map.state.overlay = overlayMaps[activeOverlayName];

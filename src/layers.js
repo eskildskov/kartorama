@@ -45,19 +45,16 @@ const steepnessOverlayMap = L.tileLayer.wms(
 
 const baseMaps = {
   Vektorkart: vectorBaseMap,
-  Rasterkart: rasterBaseMap,
+  Papirkart: rasterBaseMap,
 };
 
 const overlayMaps = {
   Helning: steepnessOverlayMap,
-  AutoKAST: kastOverlayMap,
+  Utløp: kastOverlayMap,
 };
 
 const groupedOverlays = {
-  Tillegg: {
-    Helning: steepnessOverlayMap,
-    AutoKAST: kastOverlayMap,
-  },
+  Tillegg: overlayMaps,
 };
 
 export { groupedOverlays, overlayMaps, baseMaps };
