@@ -1,9 +1,8 @@
 /* eslint-disable no-magic-numbers */
 import L from "leaflet";
-import { dynamicMapLayer } from "esri-leaflet";
 
 const attributionKartverket =
-  '<a href="http://www.kartverket.no/">Kartverket</a>';
+  '<a href="https://www.kartverket.no/">Kartverket</a>';
 const subdomainsKartverket = ["opencache", "opencache2", "opencache3"];
 const attributionNVE = '<a href="https://www.nve.no/">NVE</a>';
 
@@ -23,18 +22,17 @@ const Vektorkart = L.tileLayer(
   }
 );
 
-const Utløp = dynamicMapLayer(
+const Utløp = L.tileLayer(
+  "https://{s}.nve.no/arcgis/rest/services/wmts/KastWMTS/MapServer/tile/{z}/{y}/{x}",
   {
-    url: "https://gis2.nve.no/arcgis/rest/services/wmts/KastWMTS/MapServer",
     layers: [0, 1, 2, 3],
-  },
-  {
+    subdomains: ["gis2", "gis3", "gis4"],
     attribution: attributionNVE,
   }
 );
 
 const Helning = L.tileLayer.wms(
-  "https://gis3.nve.no/map/services/Bratthet/MapServer/WmsServer?",
+  "https://nve.geodataonline.no/arcgis/services/Bratthet/MapServer/WmsServer",
   {
     layers: "Bratthet_snoskred",
     format: "image/png",

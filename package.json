@@ -43,7 +43,6 @@
     "@turf/helpers": "^6.5.0",
     "@turf/meta": "^6.5.0",
     "@turf/turf": "^6.5.0",
-    "esri-leaflet": "^3.0.3",
     "geotiff": "^1.0.8",
     "leaflet": "^1.7.1",
     "leaflet-groupedlayercontrol": "^0.6.1",
