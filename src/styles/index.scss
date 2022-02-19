@@ -21,7 +21,7 @@ path.is-drawing {
 }
 
 .elevation-control.elevation {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.95);
 }
 
 .elevation-control.elevation .background {
@@ -34,6 +34,11 @@ path.is-drawing {
 
 .elevation-control.elevation .area {
   fill: #3e5bbc;
+}
+
+.elevation-control .elevation-summary {
+  text-shadow: none;
+  padding: 0 0 5px 6px;
 }
 
 body {

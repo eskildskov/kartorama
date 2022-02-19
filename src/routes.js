@@ -27,7 +27,7 @@ const elevationOptions = {
   followMarker: false, // Autoupdate map center on chart mouseover.
   imperial: false, // Chart distance/elevation units.
   reverseCoords: false, // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
-  summary: false,
+  summary: true,
   legend: false,
   ruler: false,
   width: 400,
@@ -50,45 +50,52 @@ const drawingOptions = {
   drawPolyline: true,
 };
 
-function generateTooltip(data, layer) {
-  const popupElement = document.createElement("p");
-  popupElement.innerHTML = `Distanse: ${data.distance} km. Opp: ${data.elevationGain} m. Ned: ${data.elevationLoss} m. `;
+// function generateTooltip(data, layer) {
+//   const popupElement = document.createElement("p");
+//   popupElement.innerHTML = `Distanse: ${data.distance} km. Opp: ${data.elevationGain} m. Ned: ${data.elevationLoss} m. `;
 
-  const removeLayerLink = document.createElement("a");
-  removeLayerLink.textContent = "Slett spor";
-  removeLayerLink.href = "#";
-  removeLayerLink.addEventListener("click", () => {
-    // deactivateRoute(layer);
-    layer.remove();
-  });
+//   const removeLayerLink = document.createElement("a");
+//   removeLayerLink.textContent = "Slett spor";
+//   removeLayerLink.href = "#";
+//   removeLayerLink.addEventListener("click", () => {
+//     // deactivateRoute(layer);
+//     layer.remove();
+//   });
 
-  popupElement.append(removeLayerLink);
+//   popupElement.append(removeLayerLink);
 
-  return popupElement;
-}
+//   return popupElement;
+// }
 
-function addTooltipToRouteLayer(layer) {
-  const geojson = layer.toGeoJSON();
+function generateStats(geojson) {
   const distance = length(geojson).toFixed(1);
   const { elevationGain, elevationLoss } = getElevationGainAndLoss(geojson);
-  const popupElement = generateTooltip(
-    {
-      elevationGain,
-      elevationLoss,
-      distance,
-    },
-    layer
-  );
-
-  layer.bindPopup(popupElement);
+  return { distance, elevationGain, elevationLoss };
 }
+
+// function addTooltipToRouteLayer(layer) {
+//   const geojson = layer.toGeoJSON();
+//   const distance = length(geojson).toFixed(1);
+//   const { elevationGain, elevationLoss } = getElevationGainAndLoss(geojson);
+//   const popupElement = generateTooltip(
+//     {
+//       elevationGain,
+//       elevationLoss,
+//       distance,
+//     },
+//     layer
+//   );
+
+//   layer.bindPopup(popupElement);
+// }
 
 function getElevationLine(routeLayer) {
   return routeLayer.controlElevationProfile._layers._layers;
 }
 
 function deactivateElevationLine(routeLayer) {
-  const elevationLine = getElevationLine(routeLayer);
+  const elevationLine = routeLayer.controlElevationProfile._layers._layers;
+
   if (Object.keys(elevationLine).length > 0) {
     Object.values(elevationLine)[0].remove();
   }
@@ -139,17 +146,22 @@ function RouteHandler(map) {
 
     activateElevationLine(routeLayer);
     showElevationProfile(routeLayer);
-    routeLayer.openPopup();
+    // routeLayer.openPopup();
     map.state.activeRouteLayer = routeLayer;
   }
 
+  // eslint-disable-next-line max-statements
   function initElevationLayer(layer) {
     const geojsonWithElevation = layer.toGeoJSON();
     layer.controlElevationProfile = L.control.elevation(elevationOptions);
     layer.controlElevationProfile.addTo(map).loadData(geojsonWithElevation);
-    addTooltipToRouteLayer(layer);
+    const data = generateStats(geojsonWithElevation);
+    const summary = `Distanse: ${data.distance} km. Opp: ${data.elevationGain} m. Ned: ${data.elevationLoss} m. `;
 
-    // map.off("mousemove");
+    layer.controlElevationProfile.on("elechart_summary", () => {
+      layer.controlElevationProfile.summaryDiv.innerHTML = summary;
+    });
+
     map.fitBounds(layer.getBounds());
 
     layer.setStyle(pathOptions);
@@ -159,6 +171,7 @@ function RouteHandler(map) {
 
     layer.on("click", (event) => {
       setActiveRoute(event.target);
+      L.DomEvent.stopPropagation(event);
     });
   }
 
