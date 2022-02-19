@@ -183,8 +183,6 @@ function initLegendControl(map) {
           type: "polygon",
           sides: 4,
           fillColor: "#1f6402",
-          color: "#000",
-          weight: 1,
         },
         {
           label: "30-35°",
