@@ -1,6 +1,5 @@
 /* eslint-disable no-alert */
 import L from "leaflet";
-import { createClient } from "@supabase/supabase-js";
 
 import { RouteHandler, getLastUserRoute } from "./routes.js";
 
@@ -79,27 +78,24 @@ L.Control.SaveRoute = L.Control.extend({
   },
 
   async _postRoute(geojson) {
-    const supabase = createClient(
-      "https://cvkrixhyrwhqqvrekwgz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYzNjkwNTE2MCwiZXhwIjoxOTUyNDgxMTYwfQ.H_zIyV0rN9nGxS5jVjSoo49UHdKw5n3fpQ6SZq21Z1g"
-    );
-
     try {
-      const { data, error } = await supabase.from("routes").insert([
+      const response = await fetch(
+        `https://kartorama-directus.eskildskov.no/items/routes/`,
         {
-          geojson,
-        },
-      ]);
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ geojson }),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) throw await response.json();
 
-      if (data) {
-        const path = this.generatePath(data[0].id);
-        history.replaceState(undefined, "", path);
-        alert(`Ruten er lagret på ${window.location.origin + path}`);
-      }
+      const data = await response.json();
+      const path = this.generatePath(data.data.id);
+      history.replaceState(undefined, "", path);
+      alert(`Ruten er lagret på ${window.location.origin + path}`);
     } catch (error) {
-      alert(error.message);
+      alert(error);
     }
   },
 
@@ -110,27 +106,19 @@ L.Control.SaveRoute = L.Control.extend({
   },
 
   async loadRoute(routeId) {
-    const supabase = createClient(
-      "https://cvkrixhyrwhqqvrekwgz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYzNjkwNTE2MCwiZXhwIjoxOTUyNDgxMTYwfQ.H_zIyV0rN9nGxS5jVjSoo49UHdKw5n3fpQ6SZq21Z1g"
-    );
-
     try {
-      const { data, error, status } = await supabase
-        .from("routes")
-        .select("id, geojson")
-        .eq("id", routeId)
-        .single();
+      const response = await fetch(
+        `https://kartorama-directus.eskildskov.no/items/routes/${routeId}`
+      );
 
-      // eslint-disable-next-line no-magic-numbers
-      if (error && status !== 406) throw error;
+      if (!response.ok) throw await response.json();
 
-      if (data.geojson) {
-        const layer = L.geoJSON(data.geojson);
-        this._routeHandler.addElevationAndReplace(layer);
-      }
+      const data = await response.json();
+
+      const layer = L.geoJSON(data.data.geojson);
+      this._routeHandler.addElevationAndReplace(layer);
     } catch (error) {
-      alert(error.message);
+      alert(error);
     }
   },
 });

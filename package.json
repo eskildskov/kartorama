@@ -38,7 +38,6 @@
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@geoman-io/leaflet-geoman-free": "^2.11.3",
     "@raruto/leaflet-elevation": "^1.7.3",
-    "@supabase/supabase-js": "^1.27.0",
     "@tmcw/togeojson": "^3.2.0",
     "@turf/helpers": "^6.5.0",
     "@turf/meta": "^6.5.0",
