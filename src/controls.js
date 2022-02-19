@@ -171,7 +171,7 @@ function initLegendControl(map) {
   L.control
     .legend({
       title: "Forklaring",
-      position: "topright",
+      position: "bottomleft",
       collapsed: true,
       symbolWidth: 24,
       opacity: 1,
