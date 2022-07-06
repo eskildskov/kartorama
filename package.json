@@ -30,7 +30,6 @@
     "resolve-url-loader": "^4.0.0",
     "sass": "^1.43.4",
     "sass-loader": "^12.1.0",
-    "vite": "^2.6.14",
     "webpack": "^5.62.2"
   },
   "dependencies": {
@@ -47,6 +46,7 @@
     "leaflet-groupedlayercontrol": "^0.6.1",
     "leaflet.locatecontrol": "^0.74.1",
     "leaflet.nontiledlayer": "^1.0.9",
-    "xmldom": "^0.6.0"
+    "xmldom": "^0.6.0",
+    "vite": "^2.6.14"
   }
 }
