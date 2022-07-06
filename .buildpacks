@@ -1,2 +1,1 @@
-https://github.com/velvet-tech/heroku-buildpack-pnpm.git
-https://github.com/heroku/heroku-buildpack-static#v8.git
+https://github.com/heroku/heroku-buildpack-static#v8
