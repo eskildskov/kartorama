@@ -1,7 +1,8 @@
 /* eslint-disable no-alert */
 import L from "leaflet";
-
+import togpx from "togpx";
 import { RouteHandler, getLastUserRoute } from "./routes.js";
+import { saveAs } from "file-saver";
 
 function createButton(container) {
   const button = L.DomUtil.create(
@@ -39,23 +40,10 @@ L.Control.SaveRoute = L.Control.extend({
     return container;
   },
 
-  loadGeojsonString(geojsonString) {
-    const geojson = JSON.parse(geojsonString);
-    const layer = L.geoJSON(geojson);
-    this._routeHandler.addElevationAndReplace(layer);
-  },
-
   onAdd(map) {
     this._isLoading = false;
     this._map = map;
     this._routeHandler = new RouteHandler(this._map);
-    const routeId = this.getRouteIdFromUrl();
-
-    if (routeId) {
-      this.loadRoute(routeId);
-    }
-
-    map.loadGeojsonString = this.loadGeojsonString.bind(this);
 
     return this.initContainer();
   },
@@ -70,53 +58,14 @@ L.Control.SaveRoute = L.Control.extend({
   _saveRoute() {
     L.DomUtil.addClass(this._button, "loading");
     const geojson = getLastUserRoute(this._map);
-    this._postRoute(geojson);
+    this.downloadRoute(geojson);
   },
 
-  generatePath(routeId) {
-    return `/?routeid=${routeId}`;
-  },
-
-  async _postRoute(geojson) {
+  downloadRoute(geojson) {
+    const xmlString = togpx(geojson);
+    const gpxBlob = new Blob([xmlString], { type: "text/xml" });
+    saveAs(gpxBlob, "route.gpx");
     try {
-      const response = await fetch(
-        `https://kartorama-directus.eskildskov.no/items/routes/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ geojson }),
-        }
-      );
-
-      if (!response.ok) throw await response.json();
-
-      const data = await response.json();
-      const path = this.generatePath(data.data.id);
-      history.replaceState(undefined, "", path);
-      alert(`Ruten er lagret på ${window.location.origin + path}`);
-    } catch (error) {
-      alert(error);
-    }
-  },
-
-  getRouteIdFromUrl() {
-    const urlParameters = new URLSearchParams(window.location.search);
-    const parameters = Object.fromEntries(urlParameters.entries());
-    return parameters.routeid || undefined;
-  },
-
-  async loadRoute(routeId) {
-    try {
-      const response = await fetch(
-        `https://kartorama-directus.eskildskov.no/items/routes/${routeId}`
-      );
-
-      if (!response.ok) throw await response.json();
-
-      const data = await response.json();
-
-      const layer = L.geoJSON(data.data.geojson);
-      this._routeHandler.addElevationAndReplace(layer);
     } catch (error) {
       alert(error);
     }

@@ -44,6 +44,7 @@
     "@turf/meta": "^6.5.0",
     "@turf/turf": "^6.5.0",
     "d3": "^7.6.1",
+    "file-saver": "^2.0.5",
     "geotiff": "^1.0.8",
     "graphql": "^16.5.0",
     "leaflet": "^1.7.1",
@@ -51,6 +52,7 @@
     "leaflet-groupedlayercontrol": "^0.6.1",
     "leaflet.locatecontrol": "^0.74.1",
     "leaflet.nontiledlayer": "^1.0.9",
+    "togpx": "github:eskildskov/togpx#003f9705adaa3030e47af0e73075079e5298c77b",
     "xmldom": "^0.6.0"
   }
 }
